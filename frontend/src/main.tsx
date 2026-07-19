@@ -9,6 +9,7 @@ import "./index.css";
 
 import MainLayout from "./layouts/MainLayout";
 import Dashboard from "./pages/Dashboard";
+import Upload from "./pages/Upload";
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <Dashboard />,
+      },
+      {
+        path: "upload",
+        element: <Upload />,
       },
     ],
   },
