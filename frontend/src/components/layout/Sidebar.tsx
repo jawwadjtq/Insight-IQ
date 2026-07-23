@@ -47,7 +47,8 @@ export default function Sidebar() {
     <aside
       className="
       w-72
-      min-h-screen
+      h-screen
+      overflow-y-auto
 
       bg-white
       dark:bg-slate-900
@@ -63,19 +64,23 @@ export default function Sidebar() {
       flex-col
       "
     >
+
       {/* Logo */}
 
       <div
         className="
-        p-8
+        p-6
+
         border-b
         border-slate-200
         dark:border-slate-800
         "
       >
+
         <h1
           className="
-          text-3xl
+          text-2xl
+          md:text-3xl
           font-bold
 
           text-slate-900
@@ -96,12 +101,15 @@ export default function Sidebar() {
         >
           AI Business Intelligence
         </p>
+
       </div>
 
       {/* Navigation */}
 
-      <nav className="flex-1 p-5 space-y-3">
+      <nav className="flex-1 p-4 space-y-2">
+
         {menuItems.map((item) => {
+
           const Icon = item.icon;
 
           return (
@@ -112,10 +120,10 @@ export default function Sidebar() {
                 `
                 flex
                 items-center
-                gap-4
+                gap-3
 
-                px-5
-                py-4
+                px-4
+                py-3
 
                 rounded-xl
 
@@ -126,40 +134,45 @@ export default function Sidebar() {
                   isActive
                     ? "bg-blue-600 text-white shadow-lg"
                     : `
-                      text-slate-700
-                      dark:text-slate-300
+                    text-slate-700
+                    dark:text-slate-300
 
-                      hover:bg-slate-100
-                      dark:hover:bg-slate-800
+                    hover:bg-slate-100
+                    dark:hover:bg-slate-800
 
-                      hover:text-blue-600
-                      dark:hover:text-white
+                    hover:text-blue-600
+                    dark:hover:text-white
                     `
                 }
                 `
               }
             >
-              <Icon size={22} />
+
+              <Icon size={20} />
 
               <span className="font-medium">
                 {item.name}
               </span>
+
             </NavLink>
           );
+
         })}
+
       </nav>
 
       {/* Footer */}
 
       <div
         className="
-        p-6
+        p-4
 
         border-t
         border-slate-200
         dark:border-slate-800
         "
       >
+
         <div
           className="
           rounded-xl
@@ -168,10 +181,9 @@ export default function Sidebar() {
           dark:bg-slate-800
 
           p-4
-
-          transition-colors
           "
         >
+
           <p
             className="
             text-sm
@@ -198,7 +210,6 @@ export default function Sidebar() {
           <button
             className="
             mt-4
-
             w-full
 
             rounded-lg
@@ -218,8 +229,11 @@ export default function Sidebar() {
           >
             Upgrade
           </button>
+
         </div>
+
       </div>
+
     </aside>
   );
 }

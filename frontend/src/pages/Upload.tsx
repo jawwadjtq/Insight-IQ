@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UploadCloud, CheckCircle2, FileText } from "lucide-react";
+import {
+  UploadCloud,
+  CheckCircle2,
+  FileText,
+  Loader2,
+} from "lucide-react";
 
 import { uploadFile } from "../services/uploadService";
 
@@ -42,188 +47,171 @@ export default function Upload() {
           navigate("/analytics");
         }, 1500);
       }
-
     } catch (error) {
       console.error(error);
       alert("Upload failed.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
-    <div className="space-y-8">
-
-      <div>
-        <h1 className="text-4xl font-bold">
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-white sm:text-4xl">
           Upload Dataset
         </h1>
 
-        <p className="text-slate-400 mt-2">
-          Upload CSV, Excel or PDF files for AI-powered analysis.
+        <p className="max-w-2xl text-sm text-slate-400 sm:text-base">
+          Upload CSV, Excel, or PDF files and let InsightIQ generate
+          AI-powered analytics, summaries, and reports in seconds.
         </p>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10">
-
+      {/* Upload Card */}
+      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-xl sm:p-8 lg:p-10">
         <label
           htmlFor="upload"
-          className="cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-xl py-16 hover:border-blue-500 transition"
+          className="group flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-700 p-8 text-center transition-all duration-300 hover:border-blue-500 hover:bg-slate-800/40"
         >
+          <div className="rounded-full bg-blue-500/10 p-5 transition group-hover:scale-105">
+            <UploadCloud className="h-12 w-12 text-blue-400 sm:h-14 sm:w-14" />
+          </div>
 
-          <UploadCloud
-            size={60}
-            className="text-blue-400"
-          />
-
-          <h2 className="text-xl font-semibold mt-6">
+          <h2 className="mt-6 text-xl font-bold text-white sm:text-2xl">
             Click to Upload
           </h2>
 
-          <p className="text-slate-400 mt-2">
-            CSV • Excel • PDF
+          <p className="mt-2 text-sm text-slate-400 sm:text-base">
+            CSV • XLS • XLSX • PDF
           </p>
+
+          <p className="mt-2 text-xs text-slate-500 sm:text-sm">
+            Maximum upload size depends on your backend configuration.
+          </p>
+
+          <div className="mt-6 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+            Choose File
+          </div>
 
           <input
             id="upload"
             type="file"
-            accept=".csv,.xlsx,.pdf"
+            accept=".csv,.xls,.xlsx,.pdf"
             className="hidden"
             onChange={handleUpload}
           />
-
         </label>
-
       </div>
 
-     {loading && (
-
-  <div className="bg-slate-900 border border-blue-600 rounded-2xl p-8">
-
-    <div className="flex items-center gap-4 mb-6">
-
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
-
-      <div>
-
-        <h2 className="text-2xl font-bold">
-          AI is analyzing your file...
-        </h2>
-
-        <p className="text-slate-400">
-          Please wait a few seconds.
-        </p>
-
-      </div>
-
-    </div>
-
-    <div className="space-y-3 text-slate-300">
-
-      <p>✓ Reading file...</p>
-
-      <p>✓ Cleaning data...</p>
-
-      <p>✓ Generating AI insights...</p>
-
-      <p>✓ Building dashboard...</p>
-
-      <p>✓ Preparing charts...</p>
-
-    </div>
-
-  </div>
-
-)}
-
-      {result && (
-
-        <div className="bg-green-900/20 border border-green-600 rounded-2xl p-8 space-y-6">
-
-          <div className="flex items-center gap-3">
-
-            <CheckCircle2 className="text-green-400" />
-
-            <h2 className="text-2xl font-bold">
-
-              Dataset Uploaded Successfully
-
-            </h2>
-
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* Loading */}
+      {loading && (
+        <div className="rounded-3xl border border-blue-600 bg-slate-900 p-6 shadow-lg sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
 
             <div>
-              <p className="text-slate-400">
-                Rows
-              </p>
+              <h2 className="text-2xl font-bold text-white">
+                AI is analyzing your file...
+              </h2>
 
-              <h3 className="text-3xl font-bold">
+              <p className="mt-1 text-slate-400">
+                Please wait a few seconds while InsightIQ processes your data.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-3 rounded-2xl bg-slate-800/40 p-5 text-slate-300">
+            <p>✓ Reading file...</p>
+            <p>✓ Cleaning data...</p>
+            <p>✓ Generating AI insights...</p>
+            <p>✓ Building dashboard...</p>
+            <p>✓ Preparing charts...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Success */}
+      {result && (
+        <div className="rounded-3xl border border-green-600 bg-green-900/20 p-6 shadow-lg sm:p-8">
+          <div className="mb-8 flex items-center gap-3">
+            <CheckCircle2 className="h-8 w-8 text-green-400" />
+
+            <h2 className="text-2xl font-bold text-white">
+              Dataset Uploaded Successfully
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+            <div className="rounded-2xl bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">Rows</p>
+
+              <h3 className="mt-2 text-3xl font-bold text-white">
                 {result.rows}
               </h3>
             </div>
 
-            <div>
-              <p className="text-slate-400">
-                Columns
-              </p>
+            <div className="rounded-2xl bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">Columns</p>
 
-              <h3 className="text-3xl font-bold">
+              <h3 className="mt-2 text-3xl font-bold text-white">
                 {result.columns}
               </h3>
             </div>
 
-            <div>
-              <p className="text-slate-400">
-                Missing Values
-              </p>
+            <div className="rounded-2xl bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">Missing Values</p>
 
-              <h3 className="text-3xl font-bold">
+              <h3 className="mt-2 text-3xl font-bold text-white">
                 {result.missing_values}
               </h3>
             </div>
 
-            <div>
-              <p className="text-slate-400">
-                Quality Score
-              </p>
+            <div className="rounded-2xl bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">Quality Score</p>
 
-              <h3 className="text-3xl font-bold text-green-400">
+              <h3 className="mt-2 text-3xl font-bold text-green-400">
                 {result.quality_score}%
               </h3>
             </div>
-
           </div>
-
         </div>
-
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+      {/* Supported Files */}
+      <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-lg sm:p-8">
+        <div className="mb-5 flex items-center gap-3">
+          <FileText className="h-6 w-6 text-blue-400" />
 
-        <div className="flex items-center gap-3 mb-4">
-
-          <FileText className="text-blue-400" />
-
-          <h2 className="text-xl font-bold">
+          <h2 className="text-xl font-bold text-white">
             Supported File Types
           </h2>
-
         </div>
 
-        <ul className="space-y-2 text-slate-400">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-800/40 p-5">
+            <h3 className="font-semibold text-white">📊 CSV</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Analyze comma-separated datasets with AI-powered insights.
+            </p>
+          </div>
 
-          <li>📊 CSV Dataset Analysis</li>
+          <div className="rounded-2xl border border-slate-800 bg-slate-800/40 p-5">
+            <h3 className="font-semibold text-white">📈 Excel</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Upload XLS and XLSX spreadsheets for automated analytics.
+            </p>
+          </div>
 
-          <li>📈 Excel Dataset Analysis</li>
-
-          <li>📄 PDF AI Report Analysis</li>
-
-        </ul>
-
+          <div className="rounded-2xl border border-slate-800 bg-slate-800/40 p-5">
+            <h3 className="font-semibold text-white">📄 PDF</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Generate intelligent AI summaries and reports from PDF files.
+            </p>
+          </div>
+        </div>
       </div>
-
     </div>
   );
 }
