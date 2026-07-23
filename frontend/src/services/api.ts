@@ -1,5 +1,5 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "https://designers-realize-builds-luggage.trycloudflare.com",
+  baseURL: "https://insight-iq-88ja.onrender.com",
 });
