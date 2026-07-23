@@ -1,0 +1,27 @@
+.app-page {
+  @apply min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-white transition-colors duration-300;
+}
+
+.app-card {
+  @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl transition-colors duration-300;
+}
+
+.app-card-header {
+  @apply text-2xl font-bold text-slate-900 dark:text-white;
+}
+
+.app-text {
+  @apply text-slate-600 dark:text-slate-400;
+}
+
+.app-input {
+  @apply w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-3 transition-colors duration-300;
+}
+
+.app-button-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-3 font-medium transition;
+}
+
+.app-button-secondary {
+  @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl px-5 py-3 transition;
+}
