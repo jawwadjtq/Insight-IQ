@@ -9,34 +9,38 @@ export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex">
+    <div className="min-h-screen bg-slate-950 text-white md:flex">
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block">
+      <aside className="hidden md:block">
         <Sidebar />
-      </div>
+      </aside>
 
       {/* Mobile Sidebar */}
       {sidebarOpen && (
         <>
+          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/60 z-40 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
 
+          {/* Drawer */}
           <div className="fixed left-0 top-0 z-50 md:hidden">
             <Sidebar onClose={() => setSidebarOpen(false)} />
           </div>
         </>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Content */}
+      <div className="w-full md:flex-1 flex flex-col min-w-0">
 
         {/* Mobile Header */}
-        <div className="md:hidden h-16 flex items-center px-4 border-b border-slate-800">
+        <div className="md:hidden h-16 flex items-center px-4 border-b border-slate-800 bg-slate-950">
 
           <button
             onClick={() => setSidebarOpen(true)}
+            className="text-white"
           >
             <Menu size={28} />
           </button>
@@ -47,9 +51,11 @@ export default function MainLayout() {
 
         </div>
 
+        {/* Desktop Navbar */}
         <Navbar />
 
-        <main className="flex-1 p-4 md:p-8 overflow-auto">
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto p-4 md:p-8">
           <Outlet />
         </main>
 
