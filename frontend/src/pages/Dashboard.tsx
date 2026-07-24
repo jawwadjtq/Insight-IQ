@@ -1,48 +1,71 @@
-import { Link } from "react-router-dom";
 import {
   Database,
   Brain,
   FileSpreadsheet,
   FileText,
   ArrowRight,
+  Sparkles,
+  BarChart3,
+  UploadCloud,
+  Activity,
 } from "lucide-react";
+
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
 
-      {/* Hero */}
+      {/* ================= HERO ================= */}
 
-      <section className="rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 p-6 md:p-10 text-white">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 p-10 md:p-16 shadow-2xl">
 
-        <div className="max-w-3xl">
+        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
 
-          <h1 className="text-3xl md:text-5xl font-bold leading-tight">
-            AI Powered
+        <div className="relative z-10 max-w-4xl">
+
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur">
+
+            <Sparkles size={18} />
+
+            AI Powered Business Intelligence
+
+          </div>
+
+          <h1 className="mt-8 text-4xl md:text-6xl font-bold leading-tight">
+
+            Transform Your Data
+
             <br />
-            Business Intelligence
+
+            Into Business Decisions
+
           </h1>
 
-          <p className="mt-5 text-base md:text-xl text-blue-100 leading-7">
-            Upload CSV, Excel or PDF documents and instantly generate
-            dashboards, AI insights, executive summaries and business reports.
+          <p className="mt-6 max-w-2xl text-lg text-blue-100">
+
+            InsightIQ helps organizations analyze CSV, Excel and PDF
+            documents using Artificial Intelligence, interactive dashboards,
+            visual analytics and automated business reports.
+
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+          <div className="mt-10 flex flex-wrap gap-4">
 
             <Link
               to="/upload"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-700 transition hover:bg-slate-100"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-4 font-semibold text-blue-700 transition hover:scale-105"
             >
-              Upload File
-              <ArrowRight size={18} />
+              <UploadCloud size={20} />
+              Upload Dataset
             </Link>
 
             <Link
               to="/analytics"
-              className="inline-flex items-center justify-center rounded-xl border border-white px-6 py-3 font-semibold transition hover:bg-white hover:text-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl border border-white px-6 py-4 transition hover:bg-white hover:text-blue-700"
             >
               Open Dashboard
+              <ArrowRight size={18} />
             </Link>
 
           </div>
@@ -51,141 +74,211 @@ export default function Dashboard() {
 
       </section>
 
-      {/* Features */}
+      {/* ================= STATS ================= */}
+
+      <section className="grid gap-6 md:grid-cols-4">
+
+        {[
+          {
+            title: "AI Analysis",
+            value: "Instant",
+            icon: Brain,
+          },
+          {
+            title: "Supported Files",
+            value: "CSV • XLSX • PDF",
+            icon: FileSpreadsheet,
+          },
+          {
+            title: "Interactive Charts",
+            value: "20+",
+            icon: BarChart3,
+          },
+          {
+            title: "Business Reports",
+            value: "Unlimited",
+            icon: FileText,
+          },
+        ].map((item) => {
+
+          const Icon = item.icon;
+
+          return (
+
+            <div
+              key={item.title}
+              className="rounded-3xl border border-slate-800 bg-slate-900 p-6 transition duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-xl"
+            >
+
+              <Icon
+                className="mb-4 text-blue-400"
+                size={34}
+              />
+
+              <p className="text-slate-400">
+
+                {item.title}
+
+              </p>
+
+              <h3 className="mt-3 text-2xl font-bold">
+
+                {item.value}
+
+              </h3>
+
+            </div>
+
+          );
+
+        })}
+
+      </section>
+
+      {/* ================= FEATURES ================= */}
 
       <section>
 
-        <h2 className="text-2xl md:text-3xl font-bold mb-6">
-          Platform Features
-        </h2>
+        <div className="mb-8">
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <h2 className="text-3xl font-bold">
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 hover:border-blue-500 transition">
+            Platform Features
 
-            <Database
-              size={40}
-              className="text-blue-400"
-            />
+          </h2>
 
-            <h3 className="mt-5 text-xl font-bold">
-              CSV Analysis
-            </h3>
+          <p className="mt-2 text-slate-400">
 
-            <p className="mt-3 text-slate-400 leading-7">
-              Upload CSV datasets and instantly explore statistics,
-              quality scores and interactive visualizations.
-            </p>
+            Everything required for modern AI-powered analytics.
 
-          </div>
+          </p>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 hover:border-green-500 transition">
+        </div>
 
-            <FileSpreadsheet
-              size={40}
-              className="text-green-400"
-            />
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 
-            <h3 className="mt-5 text-xl font-bold">
-              Excel Analytics
-            </h3>
+          {[
+            {
+              icon: Database,
+              title: "Dataset Analysis",
+              text: "Analyze structured CSV and Excel datasets instantly.",
+            },
+            {
+              icon: Brain,
+              title: "AI Insights",
+              text: "Receive intelligent recommendations automatically.",
+            },
+            {
+              icon: FileText,
+              title: "Executive Reports",
+              text: "Generate downloadable PDF and Excel reports.",
+            },
+            {
+              icon: Activity,
+              title: "Interactive Dashboard",
+              text: "Visualize business metrics through dynamic charts.",
+            },
+          ].map((feature) => {
 
-            <p className="mt-3 text-slate-400 leading-7">
-              Analyze Excel workbooks using AI and discover hidden
-              trends in your business data.
-            </p>
+            const Icon = feature.icon;
 
-          </div>
+            return (
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 hover:border-orange-500 transition">
+              <div
+                key={feature.title}
+                className="rounded-3xl border border-slate-800 bg-slate-900 p-8 transition duration-300 hover:-translate-y-1 hover:border-blue-500"
+              >
 
-            <FileText
-              size={40}
-              className="text-orange-400"
-            />
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10">
 
-            <h3 className="mt-5 text-xl font-bold">
-              PDF Reports
-            </h3>
+                  <Icon
+                    className="text-blue-400"
+                    size={30}
+                  />
 
-            <p className="mt-3 text-slate-400 leading-7">
-              Generate executive summaries, risks, opportunities and
-              recommendations from lengthy PDF documents.
-            </p>
+                </div>
 
-          </div>
+                <h3 className="text-xl font-bold">
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 hover:border-purple-500 transition">
+                  {feature.title}
 
-            <Brain
-              size={40}
-              className="text-purple-400"
-            />
+                </h3>
 
-            <h3 className="mt-5 text-xl font-bold">
-              AI Analyst
-            </h3>
+                <p className="mt-4 text-slate-400 leading-7">
 
-            <p className="mt-3 text-slate-400 leading-7">
-              Ask natural language questions about your uploaded
-              datasets and receive intelligent business insights.
-            </p>
+                  {feature.text}
 
-          </div>
+                </p>
+
+              </div>
+
+            );
+
+          })}
 
         </div>
 
       </section>
 
-      {/* Quick Stats */}
+      {/* ================= ACTIVITY ================= */}
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <section className="rounded-3xl border border-slate-800 bg-slate-900 p-8">
 
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+        <h2 className="text-2xl font-bold">
 
-          <h2 className="text-4xl font-bold text-blue-400">
-            CSV
-          </h2>
+          Getting Started
 
-          <p className="mt-3 text-slate-400">
-            Dataset Analysis
-          </p>
+        </h2>
 
-        </div>
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
 
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+          <div className="rounded-2xl bg-slate-950 p-6">
 
-          <h2 className="text-4xl font-bold text-green-400">
-            XLSX
-          </h2>
+            <h3 className="font-semibold">
 
-          <p className="mt-3 text-slate-400">
-            Excel Analytics
-          </p>
+              Step 1
 
-        </div>
+            </h3>
 
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+            <p className="mt-3 text-slate-400">
 
-          <h2 className="text-4xl font-bold text-orange-400">
-            PDF
-          </h2>
+              Upload your CSV, Excel or PDF document.
 
-          <p className="mt-3 text-slate-400">
-            AI Reports
-          </p>
+            </p>
 
-        </div>
+          </div>
 
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+          <div className="rounded-2xl bg-slate-950 p-6">
 
-          <h2 className="text-4xl font-bold text-purple-400">
-            AI
-          </h2>
+            <h3 className="font-semibold">
 
-          <p className="mt-3 text-slate-400">
-            Smart Assistant
-          </p>
+              Step 2
+
+            </h3>
+
+            <p className="mt-3 text-slate-400">
+
+              Let InsightIQ analyze and clean the dataset.
+
+            </p>
+
+          </div>
+
+          <div className="rounded-2xl bg-slate-950 p-6">
+
+            <h3 className="font-semibold">
+
+              Step 3
+
+            </h3>
+
+            <p className="mt-3 text-slate-400">
+
+              Explore dashboards, AI insights and reports.
+
+            </p>
+
+          </div>
 
         </div>
 
