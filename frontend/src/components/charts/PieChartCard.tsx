@@ -53,7 +53,7 @@ export default function PieChartCard({
               innerRadius={55}
               paddingAngle={5}
             >
-              {data.map((entry, index) => (
+              {data.map((_, index) => (
                 <Cell
                   key={index}
                   fill={COLORS[index]}
