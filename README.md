@@ -46,23 +46,25 @@ InsightIQ is an intelligent analytics platform that enables users to upload data
 
 ### Dashboard
 
-(Add Screenshot)
+[Dashboard](screenshots/Dashboard.png)
 
 ### Upload
 
-(Add Screenshot)
+[Upload](screenshots/Upload.png)
 
 ### Analytics
 
-(Add Screenshot)
+[Analytics](screenshots/Analytics1.png)
+[Analytics](screenshots/Analytics2.png)
+[Analytics](screenshots/Analytics3.png)
 
 ### AI Analyst
 
-(Add Screenshot)
+[AI Analyst](screenshots/AIAnalysis.png)
 
 ### Reports
 
-(Add Screenshot)
+[Reports](screenshots/Reports.png)
 
 ---
 
