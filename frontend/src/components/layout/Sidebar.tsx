@@ -42,12 +42,18 @@ const menuItems = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   return (
     <aside
       className="
       w-72
       h-screen
+      flex
+      flex-col
       overflow-y-auto
 
       bg-white
@@ -56,15 +62,8 @@ export default function Sidebar() {
       border-r
       border-slate-200
       dark:border-slate-800
-
-      transition-colors
-      duration-300
-
-      flex
-      flex-col
       "
     >
-
       {/* Logo */}
 
       <div
@@ -76,46 +75,75 @@ export default function Sidebar() {
         dark:border-slate-800
         "
       >
+        <div className="flex items-center gap-4">
+          <div
+            className="
+            h-14
+            w-14
 
-        <h1
-          className="
-          text-2xl
-          md:text-3xl
-          font-bold
+            rounded-2xl
 
-          text-slate-900
-          dark:text-white
-          "
-        >
-          InsightIQ
-        </h1>
+            bg-gradient-to-br
+            from-blue-600
+            to-indigo-600
 
+            flex
+            items-center
+            justify-center
+
+            text-2xl
+
+            shadow-lg
+            "
+          >
+            🧠
+          </div>
+
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              InsightIQ
+            </h1>
+
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              AI Business Intelligence Platform
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Version 1.0
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Title */}
+
+      <div className="px-6 pt-6 pb-2">
         <p
           className="
-          text-sm
-          mt-2
+          text-xs
 
-          text-slate-500
-          dark:text-slate-400
+          uppercase
+
+          tracking-[0.2em]
+
+          text-slate-400
           "
         >
-          AI Business Intelligence
+          Navigation
         </p>
-
       </div>
 
       {/* Navigation */}
 
-      <nav className="flex-1 p-4 space-y-2">
-
+      <nav className="flex-1 px-4 pb-4 space-y-2">
         {menuItems.map((item) => {
-
           const Icon = item.icon;
 
           return (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => onClose?.()}
               className={({ isActive }) =>
                 `
                 flex
@@ -127,113 +155,150 @@ export default function Sidebar() {
 
                 rounded-xl
 
+                font-medium
+
                 transition-all
-                duration-200
+                duration-300
 
                 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-lg"
+                    ? `
+                      bg-gradient-to-r
+                      from-blue-600
+                      to-indigo-600
+
+                      text-white
+
+                      shadow-lg
+                      shadow-blue-600/30
+                    `
                     : `
-                    text-slate-700
-                    dark:text-slate-300
+                      text-slate-700
+                      dark:text-slate-300
 
-                    hover:bg-slate-100
-                    dark:hover:bg-slate-800
+                      hover:bg-blue-50
+                      dark:hover:bg-slate-800
 
-                    hover:text-blue-600
-                    dark:hover:text-white
+                      hover:text-blue-600
+                      dark:hover:text-white
+
+                      hover:translate-x-1
                     `
                 }
                 `
               }
             >
-
               <Icon size={20} />
 
-              <span className="font-medium">
-                {item.name}
-              </span>
-
+              <span>{item.name}</span>
             </NavLink>
           );
-
         })}
-
       </nav>
 
       {/* Footer */}
 
       <div
         className="
-        p-4
+        p-5
 
         border-t
         border-slate-200
         dark:border-slate-800
         "
       >
-
         <div
           className="
-          rounded-xl
+          rounded-2xl
 
-          bg-slate-100
-          dark:bg-slate-800
+          border
+          border-slate-700
 
-          p-4
+          bg-gradient-to-br
+          from-slate-900
+          to-slate-800
+
+          p-5
           "
         >
-
-          <p
-            className="
-            text-sm
-
-            text-slate-600
-            dark:text-slate-300
-            "
-          >
+          <p className="text-sm text-slate-400">
             Current Plan
           </p>
 
           <h3
             className="
-            text-xl
+            mt-2
+
+            text-2xl
+
             font-bold
 
-            text-slate-900
-            dark:text-white
+            text-white
             "
           >
             Free
           </h3>
 
+          <p
+            className="
+            mt-2
+
+            text-sm
+
+            leading-6
+
+            text-slate-400
+            "
+          >
+            Upgrade to unlock AI Reports,
+            Advanced Analytics,
+            Cloud Storage,
+            and Premium Insights.
+          </p>
+
           <button
             className="
-            mt-4
+            mt-5
+
             w-full
 
-            rounded-lg
+            rounded-xl
 
-            bg-blue-600
+            bg-gradient-to-r
+            from-blue-600
+            to-indigo-600
 
-            py-2
+            py-3
 
-            font-medium
+            font-semibold
 
             text-white
 
-            hover:bg-blue-700
-
             transition
+
+            hover:scale-[1.02]
             "
           >
-            Upgrade
+            Upgrade to Pro
           </button>
-
         </div>
 
-      </div>
+        <p
+          className="
+          mt-5
 
+          text-center
+
+          text-xs
+
+          text-slate-500
+          "
+        >
+          © 2026 InsightIQ
+          <br />
+          All Rights Reserved
+        </p>
+      </div>
     </aside>
   );
 }

@@ -68,6 +68,57 @@ export default function Upload() {
           AI-powered analytics, summaries, and reports in seconds.
         </p>
       </div>
+      <div className="rounded-3xl bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-blue-500/20 p-6">
+
+<h2 className="text-2xl font-bold">
+Upload Process
+</h2>
+
+<div className="grid md:grid-cols-4 gap-6 mt-6">
+
+<div>
+<h3 className="font-semibold text-blue-400">
+1. Upload
+</h3>
+
+<p className="text-slate-400 mt-2">
+Select a CSV, Excel or PDF file.
+</p>
+</div>
+
+<div>
+<h3 className="font-semibold text-blue-400">
+2. Analyze
+</h3>
+
+<p className="text-slate-400 mt-2">
+InsightIQ automatically cleans and processes the dataset.
+</p>
+</div>
+
+<div>
+<h3 className="font-semibold text-blue-400">
+3. AI Insights
+</h3>
+
+<p className="text-slate-400 mt-2">
+Business insights and recommendations are generated.
+</p>
+</div>
+
+<div>
+<h3 className="font-semibold text-blue-400">
+4. Dashboard
+</h3>
+
+<p className="text-slate-400 mt-2">
+Interactive analytics become available instantly.
+</p>
+</div>
+
+</div>
+
+</div>
 
       {/* Upload Card */}
       <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-xl sm:p-8 lg:p-10">
@@ -80,7 +131,8 @@ export default function Upload() {
           </div>
 
           <h2 className="mt-6 text-xl font-bold text-white sm:text-2xl">
-            Click to Upload
+            Drag & Drop your Dataset
+            or click to browse files
           </h2>
 
           <p className="mt-2 text-sm text-slate-400 sm:text-base">
@@ -123,11 +175,17 @@ export default function Upload() {
           </div>
 
           <div className="mt-8 space-y-3 rounded-2xl bg-slate-800/40 p-5 text-slate-300">
-            <p>✓ Reading file...</p>
-            <p>✓ Cleaning data...</p>
-            <p>✓ Generating AI insights...</p>
-            <p>✓ Building dashboard...</p>
-            <p>✓ Preparing charts...</p>
+            <p>📂 Reading Dataset
+
+🧹 Cleaning Missing Values
+
+📊 Profiling Dataset
+
+🤖 Generating AI Insights
+
+📈 Creating Dashboard
+
+📑 Building Reports</p>
           </div>
         </div>
       )}
@@ -140,6 +198,11 @@ export default function Upload() {
 
             <h2 className="text-2xl font-bold text-white">
               Dataset Uploaded Successfully
+              <p className="text-slate-300 mt-2">
+Your dataset has been processed successfully.
+
+Redirecting to Analytics Dashboard...
+</p>
             </h2>
           </div>
 
@@ -188,6 +251,27 @@ export default function Upload() {
             Supported File Types
           </h2>
         </div>
+        <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-950 p-5">
+
+<h3 className="font-bold mb-3">
+Recommended Dataset
+</h3>
+
+<ul className="space-y-2 text-slate-400">
+
+<li>• Include column headers</li>
+
+<li>• Remove merged cells</li>
+
+<li>• Keep consistent data types</li>
+
+<li>• Avoid empty columns</li>
+
+<li>• Maximum accuracy with clean datasets</li>
+
+</ul>
+
+</div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-2xl border border-slate-800 bg-slate-800/40 p-5">

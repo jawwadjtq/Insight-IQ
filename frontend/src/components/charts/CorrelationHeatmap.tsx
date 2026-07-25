@@ -1,49 +1,57 @@
-type Props = {
-  correlation: Record<string, Record<string, number>>;
-};
+import ChartCard from "./ChartCard";
+
+interface Props {
+  correlation: any;
+}
 
 export default function CorrelationHeatmap({
   correlation,
 }: Props) {
   if (!correlation || Object.keys(correlation).length === 0) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-        <h2 className="text-2xl font-bold mb-4">
-          Correlation Heatmap
-        </h2>
-
-        <p className="text-slate-400">
-          No correlation data available.
-        </p>
-      </div>
+      <ChartCard
+        title="Correlation Heatmap"
+        subtitle="Correlation Between Numeric Features"
+      >
+        <div className="flex h-72 items-center justify-center text-slate-400">
+          Correlation matrix not available.
+        </div>
+      </ChartCard>
     );
   }
 
   const columns = Object.keys(correlation);
 
   function getColor(value: number) {
-    if (value >= 0.8) return "#2563eb";
-    if (value >= 0.5) return "#3b82f6";
-    if (value >= 0.2) return "#60a5fa";
-    if (value >= 0) return "#93c5fd";
+    if (value >= 0.8)
+      return "bg-blue-700 text-white";
 
-    if (value <= -0.8) return "#dc2626";
-    if (value <= -0.5) return "#ef4444";
-    if (value <= -0.2) return "#f87171";
+    if (value >= 0.6)
+      return "bg-blue-500 text-white";
 
-    return "#475569";
+    if (value >= 0.3)
+      return "bg-blue-300 text-slate-900";
+
+    if (value <= -0.8)
+      return "bg-red-700 text-white";
+
+    if (value <= -0.6)
+      return "bg-red-500 text-white";
+
+    if (value <= -0.3)
+      return "bg-red-300 text-slate-900";
+
+    return "bg-slate-200 dark:bg-slate-700";
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-
-      <h2 className="text-2xl font-bold mb-8">
-        Correlation Heatmap
-      </h2>
-
+    <ChartCard
+      title="Correlation Heatmap"
+      subtitle="Relationship Between Numeric Columns"
+    >
       <div className="overflow-auto">
 
-        <table className="border-collapse">
+        <table className="min-w-full border-collapse">
 
           <thead>
 
@@ -51,13 +59,13 @@ export default function CorrelationHeatmap({
 
               <th className="p-3"></th>
 
-              {columns.map((column) => (
+              {columns.map((col) => (
 
                 <th
-                  key={column}
-                  className="p-3 text-sm"
+                  key={col}
+                  className="p-3 text-sm font-semibold"
                 >
-                  {column}
+                  {col}
                 </th>
 
               ))}
@@ -72,23 +80,23 @@ export default function CorrelationHeatmap({
 
               <tr key={row}>
 
-                <th className="text-left p-3">
+                <td className="p-3 font-semibold">
                   {row}
-                </th>
+                </td>
 
-                {columns.map((column) => {
+                {columns.map((col) => {
 
-                  const value =
-                    correlation[row][column];
+                  const value = Number(
+                    correlation[row]?.[col] ?? 0
+                  );
 
                   return (
 
                     <td
-                      key={column}
-                      className="w-16 h-16 text-center font-semibold text-white"
-                      style={{
-                        backgroundColor: getColor(value),
-                      }}
+                      key={col}
+                      className={`p-3 text-center rounded ${getColor(
+                        value
+                      )}`}
                     >
                       {value.toFixed(2)}
                     </td>
@@ -106,7 +114,6 @@ export default function CorrelationHeatmap({
         </table>
 
       </div>
-
-    </div>
+    </ChartCard>
   );
 }

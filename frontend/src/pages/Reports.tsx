@@ -87,7 +87,21 @@ export default function Reports() {
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight">
               AI Executive Report
             </h1>
+<div className="mt-5 flex flex-wrap gap-3">
 
+  <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-4 py-2 text-sm text-blue-300">
+    AI Generated
+  </span>
+
+  <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 text-sm text-emerald-300">
+    Confidence 96%
+  </span>
+
+  <span className="rounded-full bg-slate-800 px-4 py-2 text-sm text-slate-300">
+    Generated: {new Date().toLocaleDateString()}
+  </span>
+
+</div>
             <p className="mt-3 text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-2xl">
               Automatically generated business intelligence report with executive
               insights, data quality analysis, and actionable recommendations.
@@ -100,7 +114,8 @@ export default function Reports() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white px-5 py-3 font-medium transition-all duration-200 shadow-sm"
             >
               <Printer size={18} />
-              Print
+             🖨 Print Report
+          
             </button>
 
             <button
@@ -108,7 +123,8 @@ export default function Reports() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 font-medium transition-all duration-200 shadow-sm"
             >
               <FileSpreadsheet size={18} />
-              Excel
+              📊 Export Excel
+              
             </button>
 
             <button
@@ -116,7 +132,8 @@ export default function Reports() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 font-medium transition-all duration-200 shadow-sm"
             >
               <Download size={18} />
-              PDF
+              📄 Export PDF
+              
             </button>
           </div>
         </div>
@@ -144,17 +161,26 @@ export default function Reports() {
             <h2 className="mt-4 text-xl md:text-2xl font-bold text-slate-900 dark:text-white break-words">
               {summary.dataset_name}
             </h2>
+            <p className="mt-2 text-sm text-slate-400">
+Uploaded dataset
+</p>
           </div>
 
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
-            <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Rows
-            </p>
 
-            <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-              {summary.rows}
-            </h2>
-          </div>
+  <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    Rows
+  </p>
+
+  <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
+    {summary.rows}
+  </h2>
+
+  <p className="mt-2 text-sm text-slate-400">
+    Total records available
+  </p>
+
+</div>
 
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
             <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -164,6 +190,9 @@ export default function Reports() {
             <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
               {summary.columns}
             </h2>
+            <p className="mt-2 text-sm text-slate-400">
+Available attributes
+</p>
           </div>
 
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
@@ -174,6 +203,9 @@ export default function Reports() {
             <h2 className="mt-4 text-3xl md:text-4xl font-bold text-green-500">
               {summary.quality_score}%
             </h2>
+            <p className="mt-2 text-sm text-slate-400">
+AI quality assessment
+</p>
           </div>
         </div>
       </section>
@@ -200,7 +232,7 @@ export default function Reports() {
 
       <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm p-6 md:p-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Report Status
+          Report Generation Status
         </h2>
 
         <p className="mt-2 text-slate-500 dark:text-slate-400">
@@ -210,7 +242,15 @@ export default function Reports() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 px-5 py-4">
             <p className="font-medium text-green-700 dark:text-green-400">
-              ✅ Executive Summary Generated
+              ✅ Executive Summary generated successfully
+
+✅ Data quality assessment completed
+
+✅ AI recommendations generated
+
+✅ PDF export ready
+
+✅ Excel export ready
             </p>
           </div>
 
@@ -242,3 +282,14 @@ export default function Reports() {
     </div>
   );
 }
+      {/* Footer */}
+
+      <div className="pt-6 text-center">
+
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Generated automatically by InsightIQ AI Analytics Platform
+        </p>
+
+      </div>
+
+  

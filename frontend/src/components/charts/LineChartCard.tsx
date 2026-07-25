@@ -1,12 +1,14 @@
 import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
+
+import ChartCard from "./ChartCard";
 
 interface Props {
   rows: number;
@@ -14,40 +16,55 @@ interface Props {
 
 export default function LineChartCard({ rows }: Props) {
   const data = Array.from({ length: 12 }, (_, i) => ({
-    month: `M${i + 1}`,
-    value: Math.floor(rows / 12) + Math.floor(Math.random() * 50),
+    month: [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ][i],
+    value: Math.round(rows * (0.6 + Math.random() * 0.4)),
   }));
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 transition-colors">
+    <ChartCard
+      title="Monthly Trend"
+      subtitle="Illustrative trend based on dataset size"
+    >
+      <div className="h-80">
 
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-        Dataset Trend
-      </h2>
+        <ResponsiveContainer width="100%" height="100%">
 
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={data}>
+          <LineChart data={data}>
 
-          <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" />
 
-          <XAxis dataKey="month" />
+            <XAxis dataKey="month" />
 
-          <YAxis />
+            <YAxis />
 
-          <Tooltip />
+            <Tooltip />
 
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#2563eb"
-            strokeWidth={3}
-            dot={{ r: 4 }}
-            activeDot={{ r: 7 }}
-          />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#2563EB"
+              strokeWidth={3}
+              dot={{ r: 4 }}
+            />
 
-        </LineChart>
-      </ResponsiveContainer>
+          </LineChart>
 
-    </div>
+        </ResponsiveContainer>
+
+      </div>
+    </ChartCard>
   );
 }

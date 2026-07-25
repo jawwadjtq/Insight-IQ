@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 
 import Sidebar from "./components/layout/Sidebar";
+import TopNavbar from "./components/layout/TopNavbar";
 
 import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
@@ -11,72 +14,86 @@ import Settings from "./pages/Settings";
 import PDFReport from "./pages/PDFReport";
 
 export default function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <BrowserRouter>
+      <div className="flex min-h-screen bg-white dark:bg-slate-950">
 
-      <div
-        className="
-        flex
-        min-h-screen
+        {/* Desktop Sidebar */}
 
-        bg-white
-        text-slate-900
+        <div className="hidden lg:block">
+          <Sidebar />
+        </div>
 
-        dark:bg-slate-950
-        dark:text-white
+        {/* Mobile Sidebar */}
 
-        transition-colors
-        duration-300
-      "
-      >
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 flex">
 
-        <Sidebar />
+            <div className="w-72 bg-white dark:bg-slate-900 shadow-2xl">
 
-        <main className="flex-1 p-8 overflow-auto">
+              <Sidebar onClose={() => setSidebarOpen(false)} />
 
-          <Routes>
+            </div>
 
-            <Route
-              path="/"
-              element={<Dashboard />}
+            <div
+              className="flex-1 bg-black/50"
+              onClick={() => setSidebarOpen(false)}
             />
 
-            <Route
-              path="/upload"
-              element={<Upload />}
-            />
+          </div>
+        )}
 
-            <Route
-              path="/analytics"
-              element={<Analytics />}
-            />
+        {/* Main */}
 
-            <Route
-              path="/ai"
-              element={<AIAnalyst />}
-            />
+        <div className="flex flex-1 flex-col overflow-hidden">
 
-            <Route
-              path="/reports"
-              element={<Reports />}
-            />
+          {/* Mobile Header */}
 
-            <Route
-              path="/settings"
-              element={<Settings />}
-            />
+          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4 py-4 lg:hidden">
 
-            <Route
-              path="/pdf-report"
-              element={<PDFReport />}
-            />
+            <button onClick={() => setSidebarOpen(true)}>
+              <Menu size={26} />
+            </button>
 
-          </Routes>
+            <h1 className="text-xl font-bold">
+              InsightIQ
+            </h1>
 
-        </main>
+            <button onClick={() => setSidebarOpen(false)}>
+              <X size={24} className="opacity-0" />
+            </button>
+
+          </div>
+
+          <TopNavbar />
+
+          <main className="flex-1 overflow-auto p-4 md:p-8">
+
+            <Routes>
+
+              <Route path="/" element={<Dashboard />} />
+
+              <Route path="/upload" element={<Upload />} />
+
+              <Route path="/analytics" element={<Analytics />} />
+
+              <Route path="/ai" element={<AIAnalyst />} />
+
+              <Route path="/reports" element={<Reports />} />
+
+              <Route path="/settings" element={<Settings />} />
+
+              <Route path="/pdf-report" element={<PDFReport />} />
+
+            </Routes>
+
+          </main>
+
+        </div>
 
       </div>
-
     </BrowserRouter>
   );
 }

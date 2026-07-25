@@ -2,25 +2,22 @@ import {
   PieChart,
   Pie,
   Cell,
-  Tooltip,
   ResponsiveContainer,
+  Tooltip,
+  Legend,
 } from "recharts";
 
-const COLORS = [
-  "#3B82F6",
-  "#10B981",
-];
+import ChartCard from "./ChartCard";
 
-type Props = {
+interface Props {
   numeric: number;
   categorical: number;
-};
+}
 
 export default function PieChartCard({
   numeric,
   categorical,
 }: Props) {
-
   const data = [
     {
       name: "Numeric",
@@ -32,38 +29,47 @@ export default function PieChartCard({
     },
   ];
 
+  const COLORS = [
+    "#3B82F6",
+    "#8B5CF6",
+  ];
+
   return (
-    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+    <ChartCard
+      title="Column Distribution"
+      subtitle="Numeric vs Categorical Columns"
+    >
+      <div className="h-80">
 
-      <h2 className="text-xl font-bold mb-6">
-        Dataset Composition
-      </h2>
+        <ResponsiveContainer width="100%" height="100%">
 
-      <ResponsiveContainer
-        width="100%"
-        height={320}
-      >
-        <PieChart>
+          <PieChart>
 
-          <Pie
-            data={data}
-            dataKey="value"
-            outerRadius={120}
-            label
-          >
-            {data.map((_, index) => (
-              <Cell
-                key={index}
-                fill={COLORS[index]}
-              />
-            ))}
-          </Pie>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              outerRadius={100}
+              innerRadius={55}
+              paddingAngle={5}
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={index}
+                  fill={COLORS[index]}
+                />
+              ))}
+            </Pie>
 
-          <Tooltip />
+            <Tooltip />
 
-        </PieChart>
-      </ResponsiveContainer>
+            <Legend />
 
-    </div>
+          </PieChart>
+
+        </ResponsiveContainer>
+
+      </div>
+    </ChartCard>
   );
 }

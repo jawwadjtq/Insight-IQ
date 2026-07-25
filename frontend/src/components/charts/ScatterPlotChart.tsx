@@ -1,90 +1,86 @@
 import {
+  ResponsiveContainer,
   ScatterChart,
   Scatter,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
 
-type Props = {
-  numericData: Record<string, number[]>;
-};
+import ChartCard from "./ChartCard";
+
+interface Props {
+  numericData: any;
+}
 
 export default function ScatterPlotChart({
   numericData,
 }: Props) {
-  if (!numericData || Object.keys(numericData).length < 2) {
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-        <h2 className="text-2xl font-bold">
-          Scatter Plot
-        </h2>
+  let values: number[] = [];
 
-        <p className="text-slate-400 mt-4">
-          At least two numeric columns are required.
-        </p>
-      </div>
+  if (Array.isArray(numericData)) {
+    values = numericData.filter(
+      (v) => typeof v === "number"
+    );
+  } else if (numericData && typeof numericData === "object") {
+    values = Object.values(numericData)
+      .flat()
+      .filter((v) => typeof v === "number") as number[];
+  }
+
+  if (values.length === 0) {
+    return (
+      <ChartCard
+        title="Scatter Plot"
+        subtitle="Relationship Between Numeric Values"
+      >
+        <div className="flex h-80 items-center justify-center text-slate-400">
+          No numeric data available.
+        </div>
+      </ChartCard>
     );
   }
 
-  const columns = Object.keys(numericData);
-
-  const xColumn = columns[0];
-  const yColumn = columns[1];
-
-  const length = Math.min(
-    numericData[xColumn].length,
-    numericData[yColumn].length
+  const scatterData = values.map(
+    (value, index) => ({
+      x: index + 1,
+      y: value,
+    })
   );
 
-  const data = [];
-
-  for (let i = 0; i < length; i++) {
-    data.push({
-      x: numericData[xColumn][i],
-      y: numericData[yColumn][i],
-    });
-  }
-
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+    <ChartCard
+      title="Scatter Plot"
+      subtitle="Distribution of Numeric Values"
+    >
+      <div className="h-80">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+        >
+          <ScatterChart>
+            <CartesianGrid strokeDasharray="3 3" />
 
-      <h2 className="text-2xl font-bold mb-6">
-        Scatter Plot ({xColumn} vs {yColumn})
-      </h2>
+            <XAxis
+              dataKey="x"
+              name="Index"
+            />
 
-      <ResponsiveContainer
-        width="100%"
-        height={400}
-      >
+            <YAxis
+              dataKey="y"
+              name="Value"
+            />
 
-        <ScatterChart>
+            <Tooltip />
 
-          <CartesianGrid strokeDasharray="3 3" />
-
-          <XAxis
-            dataKey="x"
-            name={xColumn}
-          />
-
-          <YAxis
-            dataKey="y"
-            name={yColumn}
-          />
-
-          <Tooltip />
-
-          <Scatter
-            data={data}
-            fill="#3b82f6"
-          />
-
-        </ScatterChart>
-
-      </ResponsiveContainer>
-
-    </div>
+            <Scatter
+              data={scatterData}
+              fill="#8B5CF6"
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+    </ChartCard>
   );
 }

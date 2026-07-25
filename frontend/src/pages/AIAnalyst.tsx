@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { api } from "../services/api";
 import { Brain, Send } from "lucide-react";
 
 export default function AIAnalyst() {
@@ -13,12 +13,9 @@ export default function AIAnalyst() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/ai/ask",
-        {
-          prompt,
-        }
-      );
+      const response = await api.post("/ai/ask", {
+  prompt,
+});
 
       setAnswer(response.data.response);
     } catch (error) {
@@ -68,7 +65,7 @@ export default function AIAnalyst() {
 
             <div>
               <h2 className="text-lg font-semibold text-white sm:text-xl">
-                Ask Your AI Analyst
+                Generate Insights with AI
               </h2>
 
               <p className="text-sm text-slate-400">
@@ -86,7 +83,52 @@ export default function AIAnalyst() {
             placeholder="Ask something like: Which columns should I clean first?"
             className="w-full resize-none rounded-2xl border border-slate-700 bg-slate-950 p-4 sm:p-5 text-sm sm:text-base text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
+<div className="mt-5">
 
+  <p className="text-sm text-slate-400 mb-3">
+    Suggested questions
+  </p>
+
+  <div className="flex flex-wrap gap-3">
+
+    {[
+      "Summarize this dataset",
+      "Find anomalies",
+      "Which columns need cleaning?",
+      "Recommend visualizations",
+      "Explain missing values",
+      "Generate business insights",
+    ].map((item) => (
+
+      <button
+        key={item}
+        onClick={() => setPrompt(item)}
+        className="
+        rounded-xl
+        border
+        border-slate-700
+
+        bg-slate-800
+
+        px-4
+        py-2
+
+        text-sm
+
+        transition
+
+        hover:border-blue-500
+        hover:bg-slate-700
+        "
+      >
+        {item}
+      </button>
+
+    ))}
+
+  </div>
+
+</div>
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500">
               Ask anything about trends, cleaning, insights, anomalies, or
@@ -115,13 +157,22 @@ export default function AIAnalyst() {
 
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white">
-                AI is Thinking...
+                Analyzing your data...
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-slate-300">
-                Analyzing your request and generating insights based on your
-                dataset. This may take a few moments.
-              </p>
+              <div className="mt-3 space-y-2 text-sm text-slate-300">
+
+  <p>✓ Understanding your question...</p>
+
+  <p>✓ Searching uploaded dataset...</p>
+
+  <p>✓ Running AI analysis...</p>
+
+  <p>✓ Generating business insights...</p>
+
+  <p>✓ Preparing final response...</p>
+
+</div>
 
               <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-slate-800">
                 <div className="h-full w-1/3 animate-pulse rounded-full bg-blue-500" />
@@ -133,34 +184,147 @@ export default function AIAnalyst() {
 
       {/* Response */}
       {answer && (
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 shadow-xl overflow-hidden">
-          <div className="border-b border-slate-800 bg-slate-900/70 px-5 py-5 sm:px-8">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600/15">
-                <Brain className="text-blue-400" />
-              </div>
 
-              <div>
-                <h2 className="text-xl font-bold text-white sm:text-2xl">
-                  AI Response
-                </h2>
+<div
+  className="
+  rounded-3xl
+  border
+  border-slate-800
+  bg-slate-900
+  overflow-hidden
+  shadow-xl
+  "
+>
+<div className="flex justify-end">
 
-                <p className="text-sm text-slate-400">
-                  Generated insights from your dataset.
-                </p>
-              </div>
-            </div>
-          </div>
+<button
+onClick={()=>{
+setPrompt("");
+setAnswer("");
+}}
+className="
+mt-6
 
-          <div className="p-5 sm:p-8">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5 sm:p-6">
-              <p className="whitespace-pre-wrap break-words text-sm leading-8 text-slate-200 sm:text-base">
-                {answer}
-              </p>
-            </div>
-          </div>
+rounded-xl
+
+border
+border-slate-700
+
+px-5
+py-3
+
+hover:bg-slate-800
+
+transition
+"
+>
+
+New Conversation
+
+</button>
+
+</div>
+  {/* Header */}
+
+  <div className="border-b border-slate-800 p-6">
+
+    <h2 className="text-2xl font-bold">
+      Conversation
+    </h2>
+
+    <p className="text-slate-400 text-sm mt-1">
+      Generated by InsightIQ AI
+    </p>
+
+  </div>
+
+  <div className="space-y-8 p-6">
+
+    {/* User */}
+
+    <div className="flex justify-end">
+
+      <div
+        className="
+        max-w-3xl
+
+        rounded-3xl
+
+        bg-blue-600
+
+        px-6
+        py-4
+
+        text-white
+
+        shadow-lg
+        "
+      >
+
+        <p className="font-semibold mb-2">
+          You
+        </p>
+
+        <p className="leading-7 whitespace-pre-wrap">
+          {prompt}
+        </p>
+
+      </div>
+
+    </div>
+
+    {/* AI */}
+
+    <div className="flex justify-start">
+
+      <div
+        className="
+        max-w-4xl
+
+        rounded-3xl
+
+        border
+        border-slate-700
+
+        bg-slate-950
+
+        px-6
+        py-5
+        "
+      >
+
+        <div className="flex items-center gap-3 mb-4">
+
+          <Brain
+            className="text-blue-400"
+            size={22}
+          />
+
+          <h3 className="font-bold text-lg">
+            InsightIQ AI
+          </h3>
+
         </div>
-      )}
+
+        <p
+          className="
+          whitespace-pre-wrap
+          leading-8
+          text-slate-200
+          "
+        >
+          {answer}
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
     </div>
   );
 }

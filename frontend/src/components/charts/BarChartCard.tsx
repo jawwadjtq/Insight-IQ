@@ -1,19 +1,21 @@
 import {
-  ResponsiveContainer,
   BarChart,
   Bar,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
   CartesianGrid,
 } from "recharts";
 
-type Props = {
+import ChartCard from "./ChartCard";
+
+interface Props {
   rows: number;
   columns: number;
   missing: number;
   duplicates: number;
-};
+}
 
 export default function BarChartCard({
   rows,
@@ -21,7 +23,6 @@ export default function BarChartCard({
   missing,
   duplicates,
 }: Props) {
-
   const data = [
     {
       name: "Rows",
@@ -42,34 +43,36 @@ export default function BarChartCard({
   ];
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+    <ChartCard
+      title="Dataset Statistics"
+      subtitle="Quick overview of uploaded data"
+    >
+      <div className="h-80">
 
-      <h2 className="text-xl font-bold mb-6">
-        Dataset Statistics
-      </h2>
+        <ResponsiveContainer width="100%" height="100%">
 
-      <ResponsiveContainer
-        width="100%"
-        height={320}
-      >
-        <BarChart data={data}>
+          <BarChart data={data}>
 
-          <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" />
 
-          <XAxis dataKey="name" />
+            <XAxis dataKey="name" />
 
-          <YAxis />
+            <YAxis />
 
-          <Tooltip />
+            <Tooltip />
 
-          <Bar
-            dataKey="value"
-            fill="#3B82F6"
-          />
+            <Bar
+              dataKey="value"
+              radius={[8, 8, 0, 0]}
+              fill="#3B82F6"
+            />
 
-        </BarChart>
-      </ResponsiveContainer>
+          </BarChart>
 
-    </div>
+        </ResponsiveContainer>
+
+      </div>
+
+    </ChartCard>
   );
 }

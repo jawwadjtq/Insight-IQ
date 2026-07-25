@@ -1,74 +1,98 @@
 import {
+  ResponsiveContainer,
   BarChart,
   Bar,
+  CartesianGrid,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
 
-type Props = {
-  numericData: Record<string, number[]>;
-};
+import ChartCard from "./ChartCard";
+
+interface Props {
+  numericData: any;
+}
 
 export default function HistogramChart({
   numericData,
 }: Props) {
-  if (!numericData || Object.keys(numericData).length === 0) {
-    return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-        <h2 className="text-2xl font-bold">
-          Histogram
-        </h2>
+  let values: number[] = [];
 
-        <p className="text-slate-400 mt-4">
+  if (Array.isArray(numericData)) {
+    values = numericData.filter(
+      (v) => typeof v === "number"
+    );
+  } else if (numericData && typeof numericData === "object") {
+    values = Object.values(numericData)
+      .flat()
+      .filter((v) => typeof v === "number") as number[];
+  }
+
+  if (values.length === 0) {
+    return (
+      <ChartCard
+        title="Histogram"
+        subtitle="Distribution of Numeric Values"
+      >
+        <div className="flex h-80 items-center justify-center text-slate-400">
           No numeric data available.
-        </p>
-      </div>
+        </div>
+      </ChartCard>
     );
   }
 
-  const firstColumn = Object.keys(numericData)[0];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
 
-  const values = numericData[firstColumn];
+  const bins = 8;
+  const binSize = (max - min) / bins || 1;
 
-  const histogram = values.map((value, index) => ({
-    index: index + 1,
-    value,
-  }));
+  const histogram = Array.from(
+    { length: bins },
+    (_, i) => ({
+      range: `${Math.round(min + i * binSize)}`,
+      count: 0,
+    })
+  );
+
+  values.forEach((value) => {
+    let index = Math.floor(
+      (value - min) / binSize
+    );
+
+    if (index >= bins) index = bins - 1;
+
+    histogram[index].count++;
+  });
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+    <ChartCard
+      title="Histogram"
+      subtitle="Distribution of Numeric Values"
+    >
+      <div className="h-80">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+        >
+          <BarChart data={histogram}>
+            <CartesianGrid strokeDasharray="3 3" />
 
-      <h2 className="text-2xl font-bold mb-6">
-        Histogram ({firstColumn})
-      </h2>
+            <XAxis dataKey="range" />
 
-      <ResponsiveContainer
-        width="100%"
-        height={350}
-      >
+            <YAxis />
 
-        <BarChart data={histogram}>
+            <Tooltip />
 
-          <CartesianGrid strokeDasharray="3 3" />
-
-          <XAxis dataKey="index" />
-
-          <YAxis />
-
-          <Tooltip />
-
-          <Bar
-            dataKey="value"
-            fill="#3b82f6"
-          />
-
-        </BarChart>
-
-      </ResponsiveContainer>
-
-    </div>
+            <Bar
+              dataKey="count"
+              fill="#2563EB"
+              radius={[6, 6, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </ChartCard>
   );
 }

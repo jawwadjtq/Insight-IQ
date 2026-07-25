@@ -3,49 +3,152 @@ interface Props {
 }
 
 export default function Recommendations({ summary }: Props) {
-
   return (
+    <div className="rounded-3xl border border-slate-800 bg-slate-900 overflow-hidden shadow-xl">
 
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
+      {/* Header */}
 
-      <h2 className="text-2xl font-bold mb-6">
-        AI Recommendations
-      </h2>
+      <div className="border-b border-slate-800 p-8">
 
-      <ul className="space-y-4 list-disc ml-6">
+        <h2 className="text-3xl font-bold text-white">
+          AI Recommendations
+        </h2>
+
+        <p className="mt-2 text-slate-400">
+          Actionable recommendations generated from your dataset.
+        </p>
+
+      </div>
+
+      <div className="p-8 space-y-6">
+
+        {/* Recommendation */}
 
         {summary.missing_values > 0 && (
 
-          <li>
-            Fill or remove missing values before training models.
-          </li>
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6">
+
+            <div className="flex items-center justify-between">
+
+              <h3 className="text-xl font-semibold text-white">
+                Handle Missing Values
+              </h3>
+
+              <span className="rounded-full bg-red-600 px-4 py-1 text-sm font-semibold">
+                High Priority
+              </span>
+
+            </div>
+
+            <p className="mt-4 leading-7 text-slate-300">
+              The dataset contains
+              <strong> {summary.missing_values}</strong>
+              missing values. Filling or removing these records will improve
+              model accuracy and reporting reliability.
+            </p>
+
+          </div>
 
         )}
+
+        {/* Recommendation */}
 
         {summary.duplicate_rows > 0 && (
 
-          <li>
-            Remove duplicate rows to improve data quality.
-          </li>
+          <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-6">
+
+            <div className="flex items-center justify-between">
+
+              <h3 className="text-xl font-semibold text-white">
+                Remove Duplicate Records
+              </h3>
+
+              <span className="rounded-full bg-orange-600 px-4 py-1 text-sm font-semibold">
+                High Priority
+              </span>
+
+            </div>
+
+            <p className="mt-4 leading-7 text-slate-300">
+              Duplicate records can introduce bias into dashboards and machine
+              learning models. Remove duplicate entries before analysis.
+            </p>
+
+          </div>
 
         )}
 
-        <li>
-          Normalize numeric features for better ML performance.
-        </li>
+        {/* Recommendation */}
 
-        <li>
-          Detect outliers before predictive analysis.
-        </li>
+        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-6">
 
-        <li>
-          Perform feature engineering for better business insights.
-        </li>
+          <div className="flex items-center justify-between">
 
-      </ul>
+            <h3 className="text-xl font-semibold text-white">
+              Normalize Numeric Features
+            </h3>
+
+            <span className="rounded-full bg-blue-600 px-4 py-1 text-sm font-semibold">
+              Medium
+            </span>
+
+          </div>
+
+          <p className="mt-4 leading-7 text-slate-300">
+            Scaling numerical features improves predictive model performance and
+            reduces bias caused by different value ranges.
+          </p>
+
+        </div>
+
+        {/* Recommendation */}
+
+        <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 p-6">
+
+          <div className="flex items-center justify-between">
+
+            <h3 className="text-xl font-semibold text-white">
+              Detect Outliers
+            </h3>
+
+            <span className="rounded-full bg-purple-600 px-4 py-1 text-sm font-semibold">
+              Medium
+            </span>
+
+          </div>
+
+          <p className="mt-4 leading-7 text-slate-300">
+            Outlier detection helps identify abnormal observations that may
+            distort business insights and forecasting models.
+          </p>
+
+        </div>
+
+        {/* Recommendation */}
+
+        <div className="rounded-2xl border border-green-500/20 bg-green-500/10 p-6">
+
+          <div className="flex items-center justify-between">
+
+            <h3 className="text-xl font-semibold text-white">
+              Feature Engineering
+            </h3>
+
+            <span className="rounded-full bg-green-600 px-4 py-1 text-sm font-semibold">
+              Future Improvement
+            </span>
+
+          </div>
+
+          <p className="mt-4 leading-7 text-slate-300">
+            Create additional business features, aggregations, and calculated
+            metrics to improve dashboard quality and AI model accuracy.
+          </p>
+
+        </div>
+
+      </div>
 
     </div>
-
   );
-
 }
