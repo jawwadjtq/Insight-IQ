@@ -122,11 +122,11 @@ export default function Analytics() {
 
 </div>
 
-        <h1 className="text-5xl font-extrabold">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
           Business Intelligence Dashboard
         </h1>
 
-        <p className="mt-5 text-lg text-slate-400 max-w-3xl">
+        <p className="mt-4 text-lg text-slate-300 max-w-3xl">
 
           Monitor data quality, visualize trends,
           explore business metrics and generate
@@ -154,11 +154,11 @@ export default function Analytics() {
 
           <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6">
 
-            <p className="text-xs uppercase text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
               Dataset
             </p>
 
-            <h2 className="mt-3 text-2xl font-bold break-all">
+            <h2 className="mt-3 text-2xl font-bold break-all text-white">
               {summary.dataset_name}
             </h2>
 
@@ -166,11 +166,11 @@ export default function Analytics() {
 
           <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6">
 
-            <p className="text-xs uppercase text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
               File Type
             </p>
 
-            <h2 className="mt-3 text-2xl font-bold">
+           <h2 className="mt-3 text-2xl font-bold text-white">
               {summary.dataset_name.split(".").pop()?.toUpperCase()}
             </h2>
 
@@ -178,7 +178,7 @@ export default function Analytics() {
 
           <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6">
 
-            <p className="text-xs uppercase text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
               Quality
             </p>
 
@@ -190,7 +190,7 @@ export default function Analytics() {
 
           <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6">
 
-            <p className="text-xs uppercase text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
               Rows
             </p>
 
@@ -202,7 +202,7 @@ export default function Analytics() {
 
           <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6">
 
-            <p className="text-xs uppercase text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
               Columns
             </p>
 
@@ -221,7 +221,7 @@ export default function Analytics() {
 
         <div>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
             Key Performance Indicators
           </h2>
 
@@ -241,7 +241,7 @@ export default function Analytics() {
 
         <div>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
             Interactive Visualizations
           </h2>
 
@@ -295,7 +295,7 @@ export default function Analytics() {
 
       <section className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-8">
 
-        <h2 className="text-3xl font-bold mb-8">
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
           Dataset Information
         </h2>
 
@@ -304,22 +304,22 @@ export default function Analytics() {
           <div className="space-y-5">
 
             <div className="flex justify-between">
-              <span className="font-semibold">Dataset Name</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Dataset Name</span>
               <span>{summary.dataset_name}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Rows</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Rows</span>
               <span>{summary.rows}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Columns</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Columns</span>
               <span>{summary.columns}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Memory Usage</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Memory Usage</span>
               <span>{summary.memory_usage_mb} MB</span>
             </div>
 
@@ -328,27 +328,27 @@ export default function Analytics() {
           <div className="space-y-5">
 
             <div className="flex justify-between">
-              <span className="font-semibold">Numeric Columns</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Numeric Columns</span>
               <span>{summary.numeric_columns}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Categorical Columns</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Categorical Columns</span>
               <span>{summary.categorical_columns}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Missing Values</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Missing Values</span>
               <span>{summary.missing_values}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Duplicate Rows</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Duplicate Rows</span>
               <span>{summary.duplicate_rows}</span>
             </div>
 
             <div className="flex justify-between">
-              <span className="font-semibold">Quality Score</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Quality Score</span>
 
               <span className="font-bold text-green-500">
                 {summary.quality_score}%
@@ -368,7 +368,7 @@ export default function Analytics() {
 
         <div>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
             AI Generated Insights
           </h2>
 
@@ -387,7 +387,7 @@ export default function Analytics() {
 
         <div>
 
-          <h2 className="text-3xl font-bold">
+         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
             Dataset Preview
           </h2>
 

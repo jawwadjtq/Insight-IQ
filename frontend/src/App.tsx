@@ -18,7 +18,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen bg-white dark:bg-slate-950">
+      <div className="flex min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-white transition-colors duration-300">
 
         {/* Desktop Sidebar */}
 
@@ -51,7 +51,7 @@ export default function App() {
 
           {/* Mobile Header */}
 
-          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4 py-4 lg:hidden">
+          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4 py-4 text-white lg:hidden">
 
             <button onClick={() => setSidebarOpen(true)}>
               <Menu size={26} />
@@ -69,7 +69,7 @@ export default function App() {
 
           <TopNavbar />
 
-          <main className="flex-1 overflow-auto p-4 md:p-8">
+          <main className="flex-1 overflow-auto p-4 md:p-8 text-slate-900 dark:text-white">
 
             <Routes>
 
