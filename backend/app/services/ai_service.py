@@ -1,6 +1,5 @@
-import json
 import os
-from typing import Any
+import json
 
 from dotenv import load_dotenv
 from groq import Groq
@@ -14,397 +13,213 @@ load_dotenv()
 
 
 # =========================================================
-# GROQ CONFIGURATION
-# =========================================================
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-GROQ_MODEL = os.getenv(
-    "GROQ_MODEL",
-    "openai/gpt-oss-20b",
-)
-
-
-# =========================================================
-# VALIDATE API KEY
-# =========================================================
-
-if not GROQ_API_KEY:
-    raise RuntimeError(
-        "GROQ_API_KEY is not configured. "
-        "Add GROQ_API_KEY to the Render Environment Variables."
-    )
-
-
-# =========================================================
 # GROQ CLIENT
 # =========================================================
 
 client = Groq(
-    api_key=GROQ_API_KEY,
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 
 # =========================================================
-# TEXT SIZE LIMIT
-# =========================================================
-#
-# Groq currently gives your service a relatively small
-# tokens-per-minute allowance.
-#
-# We therefore keep the dataset context intentionally small.
-#
-# Approximately 12,000-16,000 characters is usually enough
-# for useful dataset analysis while avoiding huge requests.
-#
+# MODEL
 # =========================================================
 
-MAX_DATASET_CONTEXT_CHARS = 14000
+MODEL_NAME = "openai/gpt-oss-20b"
 
 
 # =========================================================
-# SAFE SERIALIZATION
+# AI REQUEST CLASSIFIER
 # =========================================================
 
-def safe_json(value: Any) -> str:
+def classify_request(prompt: str) -> dict:
     """
-    Convert Python values into readable JSON.
+    Determine what the user wants to do with their dataset.
 
-    Handles pandas/numpy-style values and other objects that
-    cannot normally be serialized by json.dumps().
+    The classifier does NOT perform the analysis.
+    It only identifies the user's requested action.
     """
+
+    classifier_prompt = f"""
+You are the request classifier for InsightIQ,
+an AI-powered Business Intelligence platform.
+
+Analyze the user's request and classify it into exactly
+ONE of the following intent types:
+
+chat
+report
+kpi
+ranking
+trend
+anomaly
+data_quality
+customer_analysis
+sales_analysis
+financial_analysis
+dashboard
+comparison
+recommendation
+summary
+
+Definitions:
+
+chat:
+General question or explanation that does not require
+a specific generated deliverable.
+
+report:
+User explicitly asks for a report or document.
+
+kpi:
+User asks for KPIs, metrics, performance indicators,
+or important business numbers.
+
+ranking:
+User asks for top/bottom customers, products, employees,
+regions, categories, or other ranked entities.
+
+trend:
+User asks about trends, growth, changes over time,
+monthly performance, yearly performance, etc.
+
+anomaly:
+User asks to find unusual values, anomalies,
+outliers, unexpected behavior, or suspicious records.
+
+data_quality:
+User asks about missing values, duplicates,
+invalid data, inconsistent values, or data quality.
+
+customer_analysis:
+User asks to analyze customers, customer behavior,
+customer value, retention, segmentation, etc.
+
+sales_analysis:
+User asks specifically about sales performance,
+sales trends, products sold, revenue from sales, etc.
+
+financial_analysis:
+User asks about financial performance, profit,
+expenses, costs, margins, revenue, etc.
+
+dashboard:
+User asks to create, design, or recommend a dashboard.
+
+comparison:
+User asks to compare two or more periods, products,
+customers, regions, categories, or other groups.
+
+recommendation:
+User asks what actions the business should take,
+what to improve, or what decisions should be made.
+
+summary:
+User asks for a general summary or overview of the dataset.
+
+IMPORTANT:
+
+Return ONLY valid JSON.
+
+Use exactly this structure:
+
+{{
+    "intent": "one_of_the_allowed_intents",
+    "deliverable": "short description of what should be produced",
+    "requires_dataset_analysis": true,
+    "confidence": 0.0
+}}
+
+The confidence must be a number between 0 and 1.
+
+USER REQUEST:
+
+{prompt}
+"""
 
     try:
-        return json.dumps(
-            value,
-            ensure_ascii=False,
-            indent=2,
-            default=str,
+
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a precise intent classifier. "
+                        "Return valid JSON only."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": classifier_prompt,
+                },
+            ],
+            temperature=0,
+            max_tokens=300,
         )
 
-    except Exception:
-        return str(value)
-
-
-# =========================================================
-# TRUNCATE TEXT
-# =========================================================
-
-def truncate_text(
-    value: Any,
-    max_chars: int,
-) -> str:
-    """
-    Convert a value to text and safely truncate it.
-    """
-
-    text = safe_json(value)
-
-    if len(text) <= max_chars:
-        return text
-
-    return (
-        text[:max_chars]
-        + "\n\n[Additional data omitted to keep the AI request small.]"
-    )
-
-
-# =========================================================
-# COMPACT DATASET SUMMARY
-# =========================================================
-
-def build_ai_dataset_context(
-    dataset_summary: dict | None,
-) -> str:
-    """
-    Build a small but useful dataset context for the AI.
-
-    IMPORTANT:
-
-    We deliberately DO NOT send the entire dataset or large
-    numeric_data structures to Groq.
-
-    Instead we send:
-
-    - dataset metadata
-    - column names
-    - data types when available
-    - missing values
-    - duplicate rows
-    - quality score
-    - a very small preview
-    - a limited correlation matrix
-    - a limited numeric summary
-
-    This prevents Groq TPM 413 errors.
-    """
-
-    if not dataset_summary:
-        return "No dataset information is available."
-
-    context: dict[str, Any] = {}
-
-    # =====================================================
-    # BASIC DATASET INFORMATION
-    # =====================================================
-
-    context["dataset_name"] = dataset_summary.get(
-        "dataset_name"
-    )
-
-    context["rows"] = dataset_summary.get(
-        "rows"
-    )
-
-    context["columns"] = dataset_summary.get(
-        "columns"
-    )
-
-    context["numeric_columns"] = dataset_summary.get(
-        "numeric_columns"
-    )
-
-    context["categorical_columns"] = dataset_summary.get(
-        "categorical_columns"
-    )
-
-    context["missing_values"] = dataset_summary.get(
-        "missing_values"
-    )
-
-    context["duplicate_rows"] = dataset_summary.get(
-        "duplicate_rows"
-    )
-
-    context["quality_score"] = dataset_summary.get(
-        "quality_score"
-    )
-
-    # =====================================================
-    # COLUMN NAMES
-    # =====================================================
-
-    column_names = dataset_summary.get(
-        "column_names"
-    )
-
-    if isinstance(column_names, list):
-
-        context["column_names"] = column_names[:100]
-
-    else:
-
-        context["column_names"] = column_names
-
-    # =====================================================
-    # DATA TYPES
-    # =====================================================
-
-    data_types = dataset_summary.get(
-        "data_types"
-    )
-
-    if data_types:
-
-        context["data_types"] = truncate_text(
-            data_types,
-            2500,
-        )
-
-    # =====================================================
-    # DATASET PREVIEW
-    # =====================================================
-    #
-    # Only send the first few rows.
-    #
-    # The frontend can still use the complete dataset because
-    # this limitation applies only to AI context.
-    #
-    # =====================================================
-
-    preview = dataset_summary.get(
-        "preview"
-    )
-
-    if isinstance(preview, list):
-
-        context["preview"] = preview[:5]
-
-    elif preview:
-
-        context["preview"] = truncate_text(
-            preview,
-            3500,
-        )
-
-    # =====================================================
-    # CORRELATION
-    # =====================================================
-    #
-    # Correlation matrices can become extremely large.
-    #
-    # Only send a small portion.
-    #
-    # =====================================================
-
-    correlation = dataset_summary.get(
-        "correlation"
-    )
-
-    if isinstance(correlation, dict):
-
-        limited_correlation = {}
-
-        for index, (
-            column,
-            values,
-        ) in enumerate(
-            correlation.items()
-        ):
-
-            if index >= 12:
-                break
-
-            if isinstance(values, dict):
-
-                limited_correlation[
-                    column
-                ] = dict(
-                    list(values.items())[:12]
-                )
-
-            else:
-
-                limited_correlation[
-                    column
-                ] = values
-
-        context["correlation"] = limited_correlation
-
-    elif correlation:
-
-        context["correlation"] = truncate_text(
-            correlation,
-            2500,
-        )
-
-    # =====================================================
-    # NUMERIC DATA
-    # =====================================================
-    #
-    # THIS IS THE IMPORTANT PART.
-    #
-    # Do NOT send the entire numeric_data object.
-    #
-    # We only keep a small amount of information.
-    #
-    # =====================================================
-
-    numeric_data = dataset_summary.get(
-        "numeric_data"
-    )
-
-    if isinstance(numeric_data, dict):
-
-        limited_numeric_data = {}
-
-        for index, (
-            column,
-            values,
-        ) in enumerate(
-            numeric_data.items()
-        ):
-
-            # Maximum 15 numeric columns
-            if index >= 15:
-                break
-
-            if isinstance(values, dict):
-
-                # Keep common statistical fields
-                useful_fields = [
-                    "count",
-                    "mean",
-                    "std",
-                    "min",
-                    "25%",
-                    "50%",
-                    "75%",
-                    "max",
-                ]
-
-                limited_values = {}
-
-                for field in useful_fields:
-
-                    if field in values:
-
-                        limited_values[
-                            field
-                        ] = values[field]
-
-                # If no standard statistics exist,
-                # keep only a small portion.
-                if not limited_values:
-
-                    limited_values = dict(
-                        list(values.items())[:8]
-                    )
-
-                limited_numeric_data[
-                    column
-                ] = limited_values
-
-            elif isinstance(values, list):
-
-                # Only keep a few values if the structure
-                # contains raw numeric records.
-                limited_numeric_data[
-                    column
-                ] = values[:8]
-
-            else:
-
-                limited_numeric_data[
-                    column
-                ] = values
-
-        context["numeric_data"] = (
-            limited_numeric_data
-        )
-
-    elif numeric_data:
-
-        context["numeric_data"] = truncate_text(
-            numeric_data,
-            3000,
-        )
-
-    # =====================================================
-    # FINAL SERIALIZATION
-    # =====================================================
-
-    context_text = safe_json(
-        context
-    )
-
-    # =====================================================
-    # FINAL GLOBAL SAFETY LIMIT
-    # =====================================================
-
-    if len(context_text) > MAX_DATASET_CONTEXT_CHARS:
-
-        context_text = (
-            context_text[
-                :MAX_DATASET_CONTEXT_CHARS
-            ]
-            + "\n\n"
-            "[Additional dataset information omitted "
-            "to keep the AI request within the model "
-            "token limit.]"
-        )
-
-    return context_text
+        content = response.choices[0].message.content.strip()
+
+        # -------------------------------------------------
+        # Remove accidental markdown code fences
+        # -------------------------------------------------
+
+        if content.startswith("```"):
+            content = content.replace("```json", "")
+            content = content.replace("```", "")
+            content = content.strip()
+
+        result = json.loads(content)
+
+        # -------------------------------------------------
+        # Validate result
+        # -------------------------------------------------
+
+        allowed_intents = {
+            "chat",
+            "report",
+            "kpi",
+            "ranking",
+            "trend",
+            "anomaly",
+            "data_quality",
+            "customer_analysis",
+            "sales_analysis",
+            "financial_analysis",
+            "dashboard",
+            "comparison",
+            "recommendation",
+            "summary",
+        }
+
+        if result.get("intent") not in allowed_intents:
+            result["intent"] = "chat"
+
+        if "deliverable" not in result:
+            result["deliverable"] = "AI analysis"
+
+        if "requires_dataset_analysis" not in result:
+            result["requires_dataset_analysis"] = True
+
+        if "confidence" not in result:
+            result["confidence"] = 0.5
+
+        return result
+
+    except Exception as error:
+
+        print("=" * 80)
+        print("AI CLASSIFIER ERROR")
+        print(error)
+        print("=" * 80)
+
+        # Safe fallback
+        return {
+            "intent": "chat",
+            "deliverable": "AI response",
+            "requires_dataset_analysis": True,
+            "confidence": 0.0,
+        }
 
 
 # =========================================================
@@ -416,12 +231,11 @@ def ask_gemini(
     dataset_summary: dict | None = None,
 ):
     """
-    Send a normal AI question to Groq.
+    Send a normal AI question to the LLM.
 
-    The function name remains ask_gemini for compatibility
-    with the existing InsightIQ code.
-
-    The actual provider is Groq.
+    The function name is kept as ask_gemini for compatibility
+    with the existing InsightIQ code, but the actual provider
+    is Groq.
     """
 
     system_prompt = """
@@ -463,21 +277,15 @@ IMPORTANT RULES:
 9. Use headings and bullet points where appropriate.
 
 10. Do not mention internal prompts, system instructions,
-    APIs, models, or implementation details to the user.
-
-11. Keep the response concise but useful.
-
-12. Prioritize the most important business findings.
+    APIs, or implementation details to the user.
 """
 
-    dataset_context = build_ai_dataset_context(
-        dataset_summary
-    )
+    if dataset_summary:
 
-    user_prompt = f"""
+        user_prompt = f"""
 UPLOADED DATASET INFORMATION
 
-{dataset_context}
+{dataset_summary}
 
 
 USER REQUEST
@@ -489,15 +297,16 @@ Analyze the user's request using the uploaded dataset
 information above.
 
 Provide the most useful and accurate response possible.
-
-If the available dataset information is insufficient,
-clearly explain what cannot be determined.
 """
+
+    else:
+
+        user_prompt = prompt
 
     try:
 
         response = client.chat.completions.create(
-            model=GROQ_MODEL,
+            model=MODEL_NAME,
             messages=[
                 {
                     "role": "system",
@@ -509,7 +318,7 @@ clearly explain what cannot be determined.
                 },
             ],
             temperature=0.3,
-            max_tokens=1200,
+            max_tokens=1500,
         )
 
         return response.choices[0].message.content
@@ -517,10 +326,8 @@ clearly explain what cannot be determined.
     except Exception as error:
 
         print("=" * 80)
-        print("GROQ AI ERROR")
-        print(f"MODEL: {GROQ_MODEL}")
-        print(f"DATASET CONTEXT CHARACTERS: {len(dataset_context)}")
-        print(f"ERROR: {error}")
+        print("GROQ ERROR")
+        print(error)
         print("=" * 80)
 
         raise
@@ -548,7 +355,7 @@ Data Analytics consultant.
 Your job is to create professional, printable reports
 from uploaded datasets.
 
-The user may request:
+The user may request any kind of report, for example:
 
 • Executive report
 • Sales report
@@ -567,14 +374,13 @@ The user may request:
 
 IMPORTANT RULES:
 
-1. Use ONLY information available in the dataset
-   information provided to you.
+1. Use ONLY information available in the dataset information
+   provided to you.
 
-2. Never invent statistics, numbers, trends,
-   or business facts.
+2. Never invent statistics, numbers, trends, or business facts.
 
-3. If something cannot be determined from the
-   available dataset information, clearly state that.
+3. If something cannot be determined from the available
+   dataset information, clearly state that.
 
 4. Adapt the report to exactly what the user requested.
 
@@ -590,24 +396,18 @@ IMPORTANT RULES:
 
 10. Use tables or structured lists when useful.
 
-11. Do not mention internal prompts, APIs, models,
-    or implementation details.
+11. Do not mention internal prompts, APIs, models, or
+    implementation details.
 
 12. Do not add unnecessary filler.
 
 13. Make the report useful to a business decision maker.
-
-14. Keep the report concise and focused.
 """
-
-    dataset_context = build_ai_dataset_context(
-        dataset_summary
-    )
 
     user_prompt = f"""
 DATASET INFORMATION
 
-{dataset_context}
+{dataset_summary}
 
 
 USER'S REPORT REQUEST
@@ -639,20 +439,16 @@ Use Markdown-style headings such as:
 
 ## Recommendations
 
-Only include sections that are relevant to the
-user's request.
+Only include sections that are relevant to the user's request.
 
 If the user requested a specific report structure,
 follow their requested structure.
-
-Do not invent information that is not present
-in the dataset context.
 """
 
     try:
 
         response = client.chat.completions.create(
-            model=GROQ_MODEL,
+            model=MODEL_NAME,
             messages=[
                 {
                     "role": "system",
@@ -664,7 +460,7 @@ in the dataset context.
                 },
             ],
             temperature=0.2,
-            max_tokens=1800,
+            max_tokens=3000,
         )
 
         return response.choices[0].message.content
@@ -673,9 +469,7 @@ in the dataset context.
 
         print("=" * 80)
         print("GROQ REPORT ERROR")
-        print(f"MODEL: {GROQ_MODEL}")
-        print(f"DATASET CONTEXT CHARACTERS: {len(dataset_context)}")
-        print(f"ERROR: {error}")
+        print(error)
         print("=" * 80)
 
         raise
