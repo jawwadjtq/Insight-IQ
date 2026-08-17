@@ -12,11 +12,37 @@ load_dotenv()
 
 
 # =========================================================
+# GROQ CONFIGURATION
+# =========================================================
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+# Use a current production model.
+# You can override this from Render Environment Variables
+# using GROQ_MODEL if needed.
+GROQ_MODEL = os.getenv(
+    "GROQ_MODEL",
+    "openai/gpt-oss-20b",
+)
+
+
+# =========================================================
+# VALIDATE API KEY
+# =========================================================
+
+if not GROQ_API_KEY:
+    raise RuntimeError(
+        "GROQ_API_KEY is not configured. "
+        "Add GROQ_API_KEY to the Render Environment Variables."
+    )
+
+
+# =========================================================
 # GROQ CLIENT
 # =========================================================
 
 client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=GROQ_API_KEY,
 )
 
 
@@ -29,11 +55,12 @@ def ask_gemini(
     dataset_summary: dict | None = None,
 ):
     """
-    Send a normal AI question to the LLM.
+    Send a normal AI question to Groq.
 
-    The function name is kept as ask_gemini for compatibility
-    with the existing InsightIQ code, but the actual provider
-    is Groq.
+    The function name remains ask_gemini for compatibility
+    with the existing InsightIQ code.
+
+    The actual AI provider is Groq.
     """
 
     system_prompt = """
@@ -75,7 +102,7 @@ IMPORTANT RULES:
 9. Use headings and bullet points where appropriate.
 
 10. Do not mention internal prompts, system instructions,
-    APIs, or implementation details to the user.
+    APIs, models, or implementation details to the user.
 """
 
     if dataset_summary:
@@ -104,7 +131,7 @@ Provide the most useful and accurate response possible.
     try:
 
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model=GROQ_MODEL,
             messages=[
                 {
                     "role": "system",
@@ -124,8 +151,9 @@ Provide the most useful and accurate response possible.
     except Exception as error:
 
         print("=" * 80)
-        print("GROQ ERROR")
-        print(error)
+        print("GROQ AI ERROR")
+        print(f"MODEL: {GROQ_MODEL}")
+        print(f"ERROR: {error}")
         print("=" * 80)
 
         raise
@@ -246,7 +274,7 @@ follow their requested structure.
     try:
 
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model=GROQ_MODEL,
             messages=[
                 {
                     "role": "system",
@@ -267,7 +295,8 @@ follow their requested structure.
 
         print("=" * 80)
         print("GROQ REPORT ERROR")
-        print(error)
+        print(f"MODEL: {GROQ_MODEL}")
+        print(f"ERROR: {error}")
         print("=" * 80)
 
         raise
