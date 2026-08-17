@@ -1,16 +1,9 @@
+from io import BytesIO
+from xml.sax.saxutils import escape
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-
-from app.services.ai_service import (
-    ask_gemini,
-    generate_report,
-)
-
-from app.services import storage
-
-from io import BytesIO
-from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
@@ -28,6 +21,14 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+from app.services.ai_service import (
+    process_request,
+    ask_gemini,
+    generate_report,
+)
+
+from app.services import storage
 
 
 # =========================================================
@@ -60,69 +61,43 @@ def get_compact_summary():
         return None
 
     return {
-        "dataset_name": summary.get("dataset_name"),
-        "rows": summary.get("rows"),
-        "columns": summary.get("columns"),
-        "numeric_columns": summary.get("numeric_columns"),
-        "categorical_columns": summary.get("categorical_columns"),
-        "missing_values": summary.get("missing_values"),
-        "duplicate_rows": summary.get("duplicate_rows"),
-        "quality_score": summary.get("quality_score"),
-        "column_names": summary.get("column_names"),
-        "preview": summary.get("preview"),
-        "correlation": summary.get("correlation"),
-        "numeric_data": summary.get("numeric_data"),
+        "dataset_name": summary.get(
+            "dataset_name"
+        ),
+        "rows": summary.get(
+            "rows"
+        ),
+        "columns": summary.get(
+            "columns"
+        ),
+        "numeric_columns": summary.get(
+            "numeric_columns"
+        ),
+        "categorical_columns": summary.get(
+            "categorical_columns"
+        ),
+        "missing_values": summary.get(
+            "missing_values"
+        ),
+        "duplicate_rows": summary.get(
+            "duplicate_rows"
+        ),
+        "quality_score": summary.get(
+            "quality_score"
+        ),
+        "column_names": summary.get(
+            "column_names"
+        ),
+        "preview": summary.get(
+            "preview"
+        ),
+        "correlation": summary.get(
+            "correlation"
+        ),
+        "numeric_data": summary.get(
+            "numeric_data"
+        ),
     }
-
-
-# =========================================================
-# DETECT REPORT REQUEST
-# =========================================================
-
-def is_report_request(prompt: str) -> bool:
-
-    report_keywords = [
-        "make a report",
-        "create a report",
-        "generate a report",
-        "build a report",
-        "prepare a report",
-        "write a report",
-        "give me a report",
-        "create report",
-        "generate report",
-        "make report",
-        "pdf report",
-        "printable report",
-        "downloadable report",
-    ]
-
-    prompt_lower = prompt.lower()
-
-    return any(
-        keyword in prompt_lower
-        for keyword in report_keywords
-    )
-
-
-# =========================================================
-# CLEAN TEXT FOR REPORTLAB
-# =========================================================
-
-def clean_pdf_text(text: str) -> str:
-    """
-    Safely prepare AI-generated text for ReportLab Paragraph.
-
-    ReportLab Paragraph uses XML-like markup, so characters such
-    as &, < and > must be escaped before inserting AI text.
-    """
-
-    if text is None:
-        return ""
-
-    text = str(text)
-
-    return escape(text)
 
 
 # =========================================================
@@ -132,51 +107,62 @@ def clean_pdf_text(text: str) -> str:
 @router.post("/ask")
 def ask_ai(request: AIRequest):
 
+    # -----------------------------------------------------
+    # DATASET CHECK
+    # -----------------------------------------------------
+
     if storage.current_summary is None:
+
         raise HTTPException(
             status_code=400,
             detail="No dataset uploaded yet.",
         )
 
+    # -----------------------------------------------------
+    # PROMPT CHECK
+    # -----------------------------------------------------
+
     if not request.prompt.strip():
+
         raise HTTPException(
             status_code=400,
             detail="Please enter a question.",
         )
 
+    # -----------------------------------------------------
+    # DATASET SUMMARY
+    # -----------------------------------------------------
+
     compact_summary = get_compact_summary()
 
-    # =====================================================
-    # REPORT REQUEST
-    # =====================================================
+    # -----------------------------------------------------
+    # PROCESS REQUEST
+    # -----------------------------------------------------
 
-    if is_report_request(request.prompt):
+    try:
 
-        answer = generate_report(
+        result = process_request(
             request.prompt,
             compact_summary,
         )
 
-        return {
-            "success": True,
-            "type": "report",
-            "response": answer,
-        }
+        return result
 
-    # =====================================================
-    # NORMAL AI QUESTION
-    # =====================================================
+    except Exception as error:
 
-    answer = ask_gemini(
-        request.prompt,
-        compact_summary,
-    )
+        print("=" * 80)
+        print("AI REQUEST ERROR")
+        print("=" * 80)
+        print(error)
+        print("=" * 80)
 
-    return {
-        "success": True,
-        "type": "answer",
-        "response": answer,
-    }
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "InsightIQ AI could not process "
+                "your request."
+            ),
+        )
 
 
 # =========================================================
@@ -210,17 +196,163 @@ Generate:
 8. Recommended visualizations
 
 Keep the response professional and concise.
+
+Do not invent unsupported information.
 """
 
-    answer = ask_gemini(
-        prompt,
-        compact_summary,
-    )
+    try:
 
-    return {
-        "success": True,
-        "insights": answer,
-    }
+        answer = ask_gemini(
+            prompt,
+            compact_summary,
+        )
+
+        return {
+            "success": True,
+            "insights": answer,
+        }
+
+    except Exception as error:
+
+        print("=" * 80)
+        print("AI INSIGHTS ERROR")
+        print("=" * 80)
+        print(error)
+        print("=" * 80)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate AI insights.",
+        )
+
+
+# =========================================================
+# PDF TEXT HELPER
+# =========================================================
+
+def add_report_text_to_story(
+    story,
+    report_text,
+    heading_style,
+    body_style,
+    bullet_style,
+):
+    """
+    Convert AI Markdown-like output into ReportLab
+    paragraphs and headings.
+    """
+
+    lines = report_text.splitlines()
+
+    for line in lines:
+
+        clean_line = line.strip()
+
+        # -------------------------------------------------
+        # EMPTY LINE
+        # -------------------------------------------------
+
+        if not clean_line:
+
+            story.append(
+                Spacer(
+                    1,
+                    5,
+                )
+            )
+
+            continue
+
+        # -------------------------------------------------
+        # HEADING
+        # -------------------------------------------------
+
+        if clean_line.startswith("#"):
+
+            heading = clean_line.lstrip(
+                "#"
+            ).strip()
+
+            heading = escape(
+                heading
+            )
+
+            story.append(
+                Paragraph(
+                    heading,
+                    heading_style,
+                )
+            )
+
+            continue
+
+        # -------------------------------------------------
+        # BULLET
+        # -------------------------------------------------
+
+        if (
+            clean_line.startswith("-")
+            or clean_line.startswith("*")
+            or clean_line.startswith("•")
+        ):
+
+            bullet = clean_line.lstrip(
+                "-*•"
+            ).strip()
+
+            bullet = escape(
+                bullet
+            )
+
+            story.append(
+                Paragraph(
+                    f"• {bullet}",
+                    bullet_style,
+                )
+            )
+
+            continue
+
+        # -------------------------------------------------
+        # NUMBERED ITEM
+        # -------------------------------------------------
+
+        if (
+            len(clean_line) > 2
+            and clean_line[0].isdigit()
+            and clean_line[1] in [
+                ".",
+                ")",
+            ]
+        ):
+
+            numbered = escape(
+                clean_line
+            )
+
+            story.append(
+                Paragraph(
+                    numbered,
+                    body_style,
+                )
+            )
+
+            continue
+
+        # -------------------------------------------------
+        # NORMAL PARAGRAPH
+        # -------------------------------------------------
+
+        paragraph_text = escape(
+            clean_line
+        )
+
+        story.append(
+            Paragraph(
+                paragraph_text,
+                body_style,
+            )
+        )
 
 
 # =========================================================
@@ -228,7 +360,13 @@ Keep the response professional and concise.
 # =========================================================
 
 @router.post("/report/pdf")
-def generate_pdf_report(request: AIRequest):
+def generate_pdf_report(
+    request: AIRequest,
+):
+
+    # -----------------------------------------------------
+    # DATASET CHECK
+    # -----------------------------------------------------
 
     if storage.current_summary is None:
 
@@ -237,11 +375,18 @@ def generate_pdf_report(request: AIRequest):
             detail="No dataset uploaded yet.",
         )
 
+    # -----------------------------------------------------
+    # PROMPT CHECK
+    # -----------------------------------------------------
+
     if not request.prompt.strip():
 
         raise HTTPException(
             status_code=400,
-            detail="Please describe the report you want.",
+            detail=(
+                "Please describe the report "
+                "you want."
+            ),
         )
 
     compact_summary = get_compact_summary()
@@ -249,7 +394,7 @@ def generate_pdf_report(request: AIRequest):
     try:
 
         # =================================================
-        # GENERATE AI REPORT
+        # GENERATE REPORT
         # =================================================
 
         report_text = generate_report(
@@ -258,10 +403,27 @@ def generate_pdf_report(request: AIRequest):
         )
 
         if not report_text:
+
             raise HTTPException(
                 status_code=500,
-                detail="AI returned an empty report.",
+                detail=(
+                    "AI returned an empty report."
+                ),
             )
+
+        # =================================================
+        # SAVE REPORT IN STORAGE
+        # =================================================
+
+        storage.store_report(
+            {
+                "title": "InsightIQ AI Report",
+                "filename": storage.current_filename,
+                "type": "ai_report",
+                "prompt": request.prompt,
+                "content": report_text,
+            }
+        )
 
         # =================================================
         # PDF BUFFER
@@ -280,6 +442,8 @@ def generate_pdf_report(request: AIRequest):
             leftMargin=18 * mm,
             topMargin=18 * mm,
             bottomMargin=18 * mm,
+            title="InsightIQ AI Report",
+            author="InsightIQ",
         )
 
         # =================================================
@@ -303,7 +467,9 @@ def generate_pdf_report(request: AIRequest):
             alignment=TA_CENTER,
             fontSize=13,
             leading=18,
-            textColor=colors.HexColor("#475569"),
+            textColor=colors.HexColor(
+                "#475569"
+            ),
             spaceAfter=12,
         )
 
@@ -314,7 +480,9 @@ def generate_pdf_report(request: AIRequest):
             leading=20,
             spaceBefore=12,
             spaceAfter=7,
-            textColor=colors.HexColor("#0f172a"),
+            textColor=colors.HexColor(
+                "#0f172a"
+            ),
         )
 
         body_style = ParagraphStyle(
@@ -323,7 +491,9 @@ def generate_pdf_report(request: AIRequest):
             fontSize=10.5,
             leading=16,
             spaceAfter=7,
-            textColor=colors.HexColor("#1e293b"),
+            textColor=colors.HexColor(
+                "#1e293b"
+            ),
         )
 
         bullet_style = ParagraphStyle(
@@ -338,6 +508,7 @@ def generate_pdf_report(request: AIRequest):
             "InsightIQSmall",
             parent=styles["BodyText"],
             fontSize=8.5,
+            leading=11,
             textColor=colors.grey,
         )
 
@@ -348,7 +519,7 @@ def generate_pdf_report(request: AIRequest):
         story = []
 
         # =================================================
-        # TITLE
+        # HEADER
         # =================================================
 
         story.append(
@@ -365,16 +536,51 @@ def generate_pdf_report(request: AIRequest):
             )
         )
 
-        dataset_name = clean_pdf_text(
-            compact_summary.get(
-                "dataset_name",
-                "Uploaded Dataset",
+        # =================================================
+        # DATASET NAME
+        # =================================================
+
+        dataset_name = escape(
+            str(
+                compact_summary.get(
+                    "dataset_name",
+                    "Uploaded Dataset",
+                )
             )
         )
 
         story.append(
             Paragraph(
                 f"<b>Dataset:</b> {dataset_name}",
+                body_style,
+            )
+        )
+
+        story.append(
+            Spacer(
+                1,
+                8,
+            )
+        )
+
+        # =================================================
+        # USER REQUEST
+        # =================================================
+
+        user_request = escape(
+            request.prompt.strip()
+        )
+
+        story.append(
+            Paragraph(
+                "<b>Requested Analysis:</b>",
+                body_style,
+            )
+        )
+
+        story.append(
+            Paragraph(
+                user_request,
                 body_style,
             )
         )
@@ -451,6 +657,7 @@ def generate_pdf_report(request: AIRequest):
                 55 * mm,
                 100 * mm,
             ],
+            repeatRows=0,
         )
 
         overview_table.setStyle(
@@ -460,20 +667,26 @@ def generate_pdf_report(request: AIRequest):
                         "BACKGROUND",
                         (0, 0),
                         (0, -1),
-                        colors.HexColor("#f1f5f9"),
+                        colors.HexColor(
+                            "#f1f5f9"
+                        ),
                     ),
                     (
                         "TEXTCOLOR",
                         (0, 0),
                         (-1, -1),
-                        colors.HexColor("#0f172a"),
+                        colors.HexColor(
+                            "#0f172a"
+                        ),
                     ),
                     (
                         "GRID",
                         (0, 0),
                         (-1, -1),
                         0.5,
-                        colors.HexColor("#cbd5e1"),
+                        colors.HexColor(
+                            "#cbd5e1"
+                        ),
                     ),
                     (
                         "FONTNAME",
@@ -521,7 +734,7 @@ def generate_pdf_report(request: AIRequest):
         )
 
         # =================================================
-        # AI REPORT
+        # AI ANALYSIS
         # =================================================
 
         story.append(
@@ -531,108 +744,13 @@ def generate_pdf_report(request: AIRequest):
             )
         )
 
-        # =================================================
-        # PARSE AI RESPONSE
-        # =================================================
-
-        lines = report_text.splitlines()
-
-        for line in lines:
-
-            clean_line = line.strip()
-
-            if not clean_line:
-
-                story.append(
-                    Spacer(
-                        1,
-                        5,
-                    )
-                )
-
-                continue
-
-            # ---------------------------------------------
-            # MARKDOWN HEADINGS
-            # ---------------------------------------------
-
-            if clean_line.startswith("#"):
-
-                heading = clean_line.lstrip("#").strip()
-
-                heading = clean_pdf_text(
-                    heading
-                )
-
-                story.append(
-                    Paragraph(
-                        heading,
-                        heading_style,
-                    )
-                )
-
-            # ---------------------------------------------
-            # BULLET POINTS
-            # ---------------------------------------------
-
-            elif (
-                clean_line.startswith("-")
-                or clean_line.startswith("*")
-                or clean_line.startswith("•")
-            ):
-
-                bullet = clean_line.lstrip(
-                    "-*•"
-                ).strip()
-
-                bullet = clean_pdf_text(
-                    bullet
-                )
-
-                story.append(
-                    Paragraph(
-                        f"• {bullet}",
-                        bullet_style,
-                    )
-                )
-
-            # ---------------------------------------------
-            # NUMBERED POINTS
-            # ---------------------------------------------
-
-            elif (
-                len(clean_line) > 2
-                and clean_line[0].isdigit()
-                and clean_line[1] in [".", ")"]
-            ):
-
-                numbered = clean_pdf_text(
-                    clean_line
-                )
-
-                story.append(
-                    Paragraph(
-                        numbered,
-                        body_style,
-                    )
-                )
-
-            # ---------------------------------------------
-            # NORMAL TEXT
-            # ---------------------------------------------
-
-            else:
-
-                paragraph_text = clean_pdf_text(
-                    clean_line
-                )
-
-                story.append(
-                    Paragraph(
-                        paragraph_text,
-                        body_style,
-                    )
-                )
+        add_report_text_to_story(
+            story,
+            report_text,
+            heading_style,
+            body_style,
+            bullet_style,
+        )
 
         # =================================================
         # FOOTER
@@ -693,5 +811,7 @@ def generate_pdf_report(request: AIRequest):
 
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate PDF report: {str(error)}",
+            detail=(
+                "Failed to generate PDF report."
+            ),
         )
