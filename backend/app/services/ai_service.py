@@ -1,7 +1,9 @@
 import os
 import json
+import re
 from typing import Any
 
+import pandas as pd
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -21,7 +23,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 if not GROQ_API_KEY:
     raise RuntimeError(
-        "GROQ_API_KEY is not configured in the environment."
+        "GROQ_API_KEY is not configured."
     )
 
 client = Groq(
@@ -37,154 +39,51 @@ MODEL_NAME = "openai/gpt-oss-20b"
 
 
 # =========================================================
-# LIMITS
-# =========================================================
-#
-# Groq's TPM limit can be reached if the entire dataset
-# summary is sent repeatedly.
-#
-# These limits intentionally keep prompts compact.
+# SAFE AI CALL
 # =========================================================
 
-MAX_DATASET_CHARS = 24000
-MAX_PROMPT_CHARS = 6000
-
-MAX_CLASSIFIER_TOKENS = 300
-MAX_CHAT_TOKENS = 1500
-MAX_REPORT_TOKENS = 3000
-
-
-# =========================================================
-# ALLOWED INTENTS
-# =========================================================
-
-ALLOWED_INTENTS = {
-    "chat",
-    "report",
-    "kpi",
-    "ranking",
-    "trend",
-    "anomaly",
-    "data_quality",
-    "customer_analysis",
-    "sales_analysis",
-    "financial_analysis",
-    "dashboard",
-    "comparison",
-    "recommendation",
-    "summary",
-}
-
-
-# =========================================================
-# TEXT HELPERS
-# =========================================================
-
-def truncate_text(
-    value: Any,
-    max_chars: int,
+def call_ai(
+    system_prompt: str,
+    user_prompt: str,
+    max_tokens: int = 1500,
+    temperature: float = 0.3,
 ) -> str:
-    """
-    Convert a value to text and safely limit its size.
 
-    This is important because large dataset previews,
-    correlations, or numeric_data objects can make the
-    Groq request unnecessarily large.
-    """
-
-    if value is None:
-        return ""
-
-    text = str(value)
-
-    if len(text) <= max_chars:
-        return text
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {
+                "role": "system",
+                "content": system_prompt,
+            },
+            {
+                "role": "user",
+                "content": user_prompt,
+            },
+        ],
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
 
     return (
-        text[:max_chars]
-        + "\n\n[Additional data omitted to keep the AI request compact.]"
-    )
-
-
-def serialize_dataset_summary(
-    dataset_summary: dict | None,
-) -> str:
-    """
-    Convert the dataset summary into compact JSON.
-
-    JSON is more predictable for the AI than Python's
-    dictionary representation and makes the dataset
-    structure easier for the model to understand.
-    """
-
-    if not dataset_summary:
-        return "No dataset information is available."
-
-    try:
-
-        compact_summary = dict(dataset_summary)
-
-        # -------------------------------------------------
-        # Convert to JSON
-        # -------------------------------------------------
-
-        text = json.dumps(
-            compact_summary,
-            ensure_ascii=False,
-            default=str,
-        )
-
-    except Exception:
-
-        text = str(dataset_summary)
-
-    return truncate_text(
-        text,
-        MAX_DATASET_CHARS,
-    )
-
-
-def normalize_prompt(
-    prompt: str,
-) -> str:
-    """
-    Clean and limit the user's prompt.
-    """
-
-    if prompt is None:
-        return ""
-
-    prompt = str(prompt).strip()
-
-    return truncate_text(
-        prompt,
-        MAX_PROMPT_CHARS,
+        response.choices[0]
+        .message
+        .content
+        .strip()
     )
 
 
 # =========================================================
-# AI REQUEST CLASSIFIER
+# REQUEST CLASSIFIER
 # =========================================================
 
-def classify_request(
-    prompt: str,
-) -> dict:
+def classify_request(prompt: str) -> dict:
     """
-    Determine what the user wants to do with the dataset.
+    Determine what the user wants from the uploaded dataset.
 
-    The classifier identifies the user's intent.
-    It does NOT perform the actual analysis.
-
-    Example:
-
-        "show me the top 10 customers"
-
-    becomes:
-
-        ranking
+    The classifier only determines intent.
+    Actual dataset analysis is performed separately.
     """
-
-    normalized_prompt = normalize_prompt(prompt)
 
     classifier_prompt = f"""
 You are the request classifier for InsightIQ,
@@ -215,169 +114,129 @@ chat:
 General question or explanation.
 
 report:
-The user explicitly wants a report or document.
+User explicitly requests a report or document.
 
 kpi:
-The user wants KPIs, metrics, performance indicators,
+User asks for KPIs, metrics, performance indicators,
 or important business numbers.
 
 ranking:
-The user wants top/bottom customers, products,
-employees, regions, categories, or other ranked entities.
+User asks for top/bottom customers, products,
+employees, regions, categories, or other entities.
 
 trend:
-The user wants trends, growth, changes over time,
-monthly performance, yearly performance, or time-based analysis.
+User asks about trends, growth, changes over time,
+monthly performance, yearly performance, etc.
 
 anomaly:
-The user wants unusual values, outliers, anomalies,
-unexpected behavior, or suspicious records.
+User asks for unusual values, outliers, anomalies,
+or suspicious records.
 
 data_quality:
-The user wants missing-value, duplicate, invalid-data,
-or data-quality analysis.
+User asks about missing values, duplicates,
+invalid data, inconsistent data, or cleaning.
 
 customer_analysis:
-The user wants customer behavior, customer value,
-retention, segmentation, or customer analysis.
+User asks about customers or customer behavior.
 
 sales_analysis:
-The user wants sales performance, sales trends,
-products sold, sales revenue, or sales analysis.
+User asks about sales performance.
 
 financial_analysis:
-The user wants profit, expenses, costs, margins,
-revenue, or financial analysis.
+User asks about profit, expenses, costs,
+margins, revenue, or financial performance.
 
 dashboard:
-The user wants a dashboard, dashboard design,
-dashboard recommendations, or dashboard specifications.
+User asks to create or design a dashboard.
 
 comparison:
-The user wants to compare periods, products, customers,
-regions, categories, or other groups.
+User asks to compare periods, products, customers,
+regions, categories, or groups.
 
 recommendation:
-The user wants business recommendations, actions,
-improvements, or decisions.
+User asks what actions should be taken.
 
 summary:
-The user wants a general dataset summary or overview.
-
-IMPORTANT:
+User asks for a general dataset summary.
 
 Return ONLY valid JSON.
 
 Use exactly:
 
 {{
-    "intent": "one_allowed_intent",
+    "intent": "one_of_the_allowed_intents",
     "deliverable": "short description",
     "requires_dataset_analysis": true,
     "confidence": 0.0
 }}
 
-Confidence must be between 0 and 1.
-
 USER REQUEST:
 
-{normalized_prompt}
+{prompt}
 """
 
     try:
 
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a precise intent classifier. "
-                        "Return valid JSON only."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": classifier_prompt,
-                },
-            ],
+        result_text = call_ai(
+            system_prompt=(
+                "You are a precise intent classifier. "
+                "Return valid JSON only."
+            ),
+            user_prompt=classifier_prompt,
+            max_tokens=250,
             temperature=0,
-            max_tokens=MAX_CLASSIFIER_TOKENS,
         )
 
-        content = (
-            response.choices[0]
-            .message
-            .content
-            .strip()
+        # Remove markdown fences if the model adds them.
+        result_text = re.sub(
+            r"```json\s*",
+            "",
+            result_text,
+            flags=re.IGNORECASE,
         )
 
-        # -------------------------------------------------
-        # Remove accidental Markdown fences
-        # -------------------------------------------------
+        result_text = re.sub(
+            r"```\s*",
+            "",
+            result_text,
+        ).strip()
 
-        if content.startswith("```"):
+        result = json.loads(result_text)
 
-            content = (
-                content
-                .replace("```json", "")
-                .replace("```", "")
-                .strip()
-            )
+        allowed_intents = {
+            "chat",
+            "report",
+            "kpi",
+            "ranking",
+            "trend",
+            "anomaly",
+            "data_quality",
+            "customer_analysis",
+            "sales_analysis",
+            "financial_analysis",
+            "dashboard",
+            "comparison",
+            "recommendation",
+            "summary",
+        }
 
-        result = json.loads(content)
-
-        # -------------------------------------------------
-        # Validate intent
-        # -------------------------------------------------
-
-        if result.get("intent") not in ALLOWED_INTENTS:
+        if result.get("intent") not in allowed_intents:
             result["intent"] = "chat"
 
-        # -------------------------------------------------
-        # Validate deliverable
-        # -------------------------------------------------
-
-        if not result.get("deliverable"):
-            result["deliverable"] = "AI analysis"
-
-        # -------------------------------------------------
-        # Validate dataset requirement
-        # -------------------------------------------------
-
-        result["requires_dataset_analysis"] = bool(
-            result.get(
-                "requires_dataset_analysis",
-                True,
-            )
+        result.setdefault(
+            "deliverable",
+            "AI analysis",
         )
 
-        # -------------------------------------------------
-        # Validate confidence
-        # -------------------------------------------------
-
-        try:
-
-            confidence = float(
-                result.get(
-                    "confidence",
-                    0.5,
-                )
-            )
-
-        except Exception:
-
-            confidence = 0.5
-
-        confidence = max(
-            0.0,
-            min(
-                confidence,
-                1.0,
-            ),
+        result.setdefault(
+            "requires_dataset_analysis",
+            True,
         )
 
-        result["confidence"] = confidence
+        result.setdefault(
+            "confidence",
+            0.5,
+        )
 
         return result
 
@@ -397,27 +256,692 @@ USER REQUEST:
 
 
 # =========================================================
-# NORMAL AI QUESTION
+# DATASET HELPERS
+# =========================================================
+
+def normalize_column_name(column: Any) -> str:
+    """
+    Normalize a dataframe column name for matching.
+    """
+
+    return re.sub(
+        r"[^a-z0-9]",
+        "",
+        str(column).lower(),
+    )
+
+
+def find_column(
+    df: pd.DataFrame,
+    keywords: list[str],
+) -> str | None:
+    """
+    Find the most likely dataframe column based on keywords.
+    """
+
+    normalized_columns = {
+        column: normalize_column_name(column)
+        for column in df.columns
+    }
+
+    # Exact normalized match first.
+    for column, normalized in normalized_columns.items():
+
+        for keyword in keywords:
+
+            normalized_keyword = normalize_column_name(
+                keyword
+            )
+
+            if normalized == normalized_keyword:
+                return column
+
+    # Partial match.
+    for column, normalized in normalized_columns.items():
+
+        for keyword in keywords:
+
+            normalized_keyword = normalize_column_name(
+                keyword
+            )
+
+            if normalized_keyword in normalized:
+                return column
+
+    return None
+
+
+def get_numeric_columns(
+    df: pd.DataFrame,
+) -> list[str]:
+
+    return [
+        column
+        for column in df.columns
+        if pd.api.types.is_numeric_dtype(
+            df[column]
+        )
+    ]
+
+
+def get_text_columns(
+    df: pd.DataFrame,
+) -> list[str]:
+
+    return [
+        column
+        for column in df.columns
+        if (
+            pd.api.types.is_object_dtype(
+                df[column]
+            )
+            or pd.api.types.is_string_dtype(
+                df[column]
+            )
+        )
+    ]
+
+
+# =========================================================
+# RANKING ANALYSIS
+# =========================================================
+
+def analyze_ranking(
+    df: pd.DataFrame,
+    prompt: str,
+) -> dict:
+
+    if df is None or df.empty:
+
+        return {
+            "success": False,
+            "message": "The uploaded dataset is empty.",
+        }
+
+    text_columns = get_text_columns(df)
+    numeric_columns = get_numeric_columns(df)
+
+    # -----------------------------------------------------
+    # Detect requested entity
+    # -----------------------------------------------------
+
+    entity_column = None
+
+    customer_keywords = [
+        "customer",
+        "client",
+        "buyer",
+        "customername",
+        "clientname",
+        "customerid",
+        "clientid",
+    ]
+
+    product_keywords = [
+        "product",
+        "item",
+        "productname",
+        "productid",
+    ]
+
+    employee_keywords = [
+        "employee",
+        "staff",
+        "salesperson",
+        "employeeid",
+        "salespersonid",
+    ]
+
+    region_keywords = [
+        "region",
+        "area",
+        "territory",
+        "location",
+        "city",
+        "state",
+        "country",
+    ]
+
+    category_keywords = [
+        "category",
+        "subcategory",
+        "segment",
+        "type",
+    ]
+
+    prompt_lower = prompt.lower()
+
+    if any(
+        word in prompt_lower
+        for word in [
+            "customer",
+            "customers",
+            "client",
+            "clients",
+        ]
+    ):
+
+        entity_column = find_column(
+            df,
+            customer_keywords,
+        )
+
+    elif any(
+        word in prompt_lower
+        for word in [
+            "product",
+            "products",
+            "item",
+            "items",
+        ]
+    ):
+
+        entity_column = find_column(
+            df,
+            product_keywords,
+        )
+
+    elif any(
+        word in prompt_lower
+        for word in [
+            "employee",
+            "employees",
+            "salesperson",
+            "salespeople",
+        ]
+    ):
+
+        entity_column = find_column(
+            df,
+            employee_keywords,
+        )
+
+    elif any(
+        word in prompt_lower
+        for word in [
+            "region",
+            "regions",
+            "area",
+            "territory",
+            "city",
+            "country",
+        ]
+    ):
+
+        entity_column = find_column(
+            df,
+            region_keywords,
+        )
+
+    elif any(
+        word in prompt_lower
+        for word in [
+            "category",
+            "categories",
+            "segment",
+        ]
+    ):
+
+        entity_column = find_column(
+            df,
+            category_keywords,
+        )
+
+    # -----------------------------------------------------
+    # Fallback to text column
+    # -----------------------------------------------------
+
+    if entity_column is None and text_columns:
+
+        # Prefer columns with lower cardinality than IDs,
+        # but otherwise use the first text column.
+        entity_column = text_columns[0]
+
+    if entity_column is None:
+
+        return {
+            "success": False,
+            "message": (
+                "I could not identify an entity column "
+                "such as Customer, Product, Region, "
+                "or Employee."
+            ),
+        }
+
+    # -----------------------------------------------------
+    # Detect metric
+    # -----------------------------------------------------
+
+    metric_column = None
+
+    metric_keywords = [
+        "sales",
+        "revenue",
+        "amount",
+        "value",
+        "profit",
+        "income",
+        "total",
+        "price",
+        "quantity",
+        "units",
+        "orders",
+        "spend",
+    ]
+
+    # Try matching numeric columns to business metrics.
+    for column in numeric_columns:
+
+        normalized = normalize_column_name(
+            column
+        )
+
+        for keyword in metric_keywords:
+
+            normalized_keyword = normalize_column_name(
+                keyword
+            )
+
+            if normalized_keyword in normalized:
+
+                metric_column = column
+                break
+
+        if metric_column:
+            break
+
+    # -----------------------------------------------------
+    # Fallback metric
+    # -----------------------------------------------------
+
+    if metric_column is None and numeric_columns:
+
+        # Prefer a column that isn't obviously an ID.
+        non_id_columns = [
+            column
+            for column in numeric_columns
+            if "id" not in normalize_column_name(
+                column
+            )
+        ]
+
+        if non_id_columns:
+            metric_column = non_id_columns[0]
+        else:
+            metric_column = numeric_columns[0]
+
+    # -----------------------------------------------------
+    # Determine requested number
+    # -----------------------------------------------------
+
+    number_match = re.search(
+        r"\b(?:top|bottom|first|last)\s+(\d+)\b",
+        prompt.lower(),
+    )
+
+    if number_match:
+
+        limit = int(
+            number_match.group(1)
+        )
+
+    else:
+
+        limit = 10
+
+    limit = max(
+        1,
+        min(limit, 100),
+    )
+
+    # -----------------------------------------------------
+    # Determine top/bottom
+    # -----------------------------------------------------
+
+    is_bottom = any(
+        phrase in prompt.lower()
+        for phrase in [
+            "bottom",
+            "lowest",
+            "worst",
+            "least",
+            "smallest",
+        ]
+    )
+
+    # -----------------------------------------------------
+    # Perform actual dataset analysis
+    # -----------------------------------------------------
+
+    working_df = df.copy()
+
+    working_df[entity_column] = (
+        working_df[entity_column]
+        .astype(str)
+        .str.strip()
+    )
+
+    working_df = working_df[
+        working_df[entity_column].notna()
+    ]
+
+    if metric_column:
+
+        working_df[metric_column] = pd.to_numeric(
+            working_df[metric_column],
+            errors="coerce",
+        )
+
+        working_df = working_df[
+            working_df[metric_column].notna()
+        ]
+
+        grouped = (
+            working_df
+            .groupby(
+                entity_column,
+                dropna=False,
+            )[metric_column]
+            .agg(
+                total="sum",
+                average="mean",
+                records="count",
+            )
+            .reset_index()
+        )
+
+        grouped = grouped.sort_values(
+            "total",
+            ascending=is_bottom,
+        )
+
+        result_df = grouped.head(
+            limit
+        )
+
+    else:
+
+        grouped = (
+            working_df
+            .groupby(
+                entity_column,
+                dropna=False,
+            )
+            .size()
+            .reset_index(
+                name="records"
+            )
+        )
+
+        grouped = grouped.sort_values(
+            "records",
+            ascending=is_bottom,
+        )
+
+        result_df = grouped.head(
+            limit
+        )
+
+    # -----------------------------------------------------
+    # Convert results to safe JSON
+    # -----------------------------------------------------
+
+    ranking_rows = []
+
+    for _, row in result_df.iterrows():
+
+        item = {
+            "entity": str(
+                row[entity_column]
+            ),
+            "records": int(
+                row["records"]
+            ),
+        }
+
+        if "total" in row:
+
+            item["total"] = round(
+                float(row["total"]),
+                2,
+            )
+
+        if "average" in row:
+
+            item["average"] = round(
+                float(row["average"]),
+                2,
+            )
+
+        ranking_rows.append(item)
+
+    return {
+        "success": True,
+        "analysis_type": "ranking",
+        "entity_column": entity_column,
+        "metric_column": metric_column,
+        "direction": (
+            "bottom"
+            if is_bottom
+            else "top"
+        ),
+        "limit": limit,
+        "results": ranking_rows,
+    }
+
+
+# =========================================================
+# RANKING AI EXPLANATION
+# =========================================================
+
+def explain_ranking(
+    prompt: str,
+    analysis: dict,
+) -> str:
+
+    system_prompt = """
+You are InsightIQ AI.
+
+You are a senior Business Intelligence Analyst.
+
+The application has already performed the actual
+calculation on the uploaded dataset.
+
+Your job is ONLY to explain the supplied results.
+
+IMPORTANT:
+
+1. Never invent values.
+2. Never change calculated values.
+3. Use only the supplied analysis.
+4. Explain why the leading entities may be important.
+5. Be clear that importance is based on the available
+   metric and dataset evidence.
+6. If there is insufficient evidence, say so.
+7. Use professional formatting.
+"""
+
+    user_prompt = f"""
+USER REQUEST:
+
+{prompt}
+
+CALCULATED DATASET ANALYSIS:
+
+{json.dumps(analysis, indent=2, default=str)}
+
+Provide a concise but useful business analysis.
+
+Include:
+
+## Result
+
+Explain the ranking.
+
+## Why They Matter
+
+Explain what makes the leading entities important
+based strictly on the calculated data.
+
+## Business Insight
+
+Give practical interpretation.
+
+## Recommendation
+
+Give useful next steps if supported by the data.
+"""
+
+    return call_ai(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        max_tokens=1200,
+        temperature=0.2,
+    )
+
+
+# =========================================================
+# KPI ANALYSIS
+# =========================================================
+
+def analyze_kpis(
+    df: pd.DataFrame,
+) -> dict:
+
+    numeric_columns = get_numeric_columns(
+        df
+    )
+
+    if not numeric_columns:
+
+        return {
+            "success": False,
+            "message": (
+                "No numeric columns were found "
+                "for KPI analysis."
+            ),
+        }
+
+    metrics = []
+
+    for column in numeric_columns:
+
+        series = pd.to_numeric(
+            df[column],
+            errors="coerce",
+        ).dropna()
+
+        if series.empty:
+            continue
+
+        metrics.append(
+            {
+                "metric": str(column),
+                "count": int(series.count()),
+                "sum": round(
+                    float(series.sum()),
+                    2,
+                ),
+                "average": round(
+                    float(series.mean()),
+                    2,
+                ),
+                "minimum": round(
+                    float(series.min()),
+                    2,
+                ),
+                "maximum": round(
+                    float(series.max()),
+                    2,
+                ),
+            }
+        )
+
+    return {
+        "success": True,
+        "analysis_type": "kpi",
+        "metrics": metrics[:20],
+    }
+
+
+# =========================================================
+# DATA QUALITY ANALYSIS
+# =========================================================
+
+def analyze_data_quality(
+    df: pd.DataFrame,
+) -> dict:
+
+    total_cells = (
+        len(df)
+        * len(df.columns)
+    )
+
+    missing_cells = int(
+        df.isna().sum().sum()
+    )
+
+    missing_percentage = (
+        (missing_cells / total_cells) * 100
+        if total_cells
+        else 0
+    )
+
+    duplicate_rows = int(
+        df.duplicated().sum()
+    )
+
+    columns = []
+
+    for column in df.columns:
+
+        missing = int(
+            df[column].isna().sum()
+        )
+
+        columns.append(
+            {
+                "column": str(column),
+                "missing": missing,
+                "missing_percentage": round(
+                    (
+                        missing / len(df) * 100
+                    )
+                    if len(df)
+                    else 0,
+                    2,
+                ),
+                "unique_values": int(
+                    df[column].nunique(
+                        dropna=True
+                    )
+                ),
+            }
+        )
+
+    return {
+        "success": True,
+        "analysis_type": "data_quality",
+        "rows": len(df),
+        "columns": len(df.columns),
+        "missing_cells": missing_cells,
+        "missing_percentage": round(
+            missing_percentage,
+            2,
+        ),
+        "duplicate_rows": duplicate_rows,
+        "column_analysis": columns,
+    }
+
+
+# =========================================================
+# GENERAL AI QUESTION
 # =========================================================
 
 def ask_gemini(
     prompt: str,
     dataset_summary: dict | None = None,
 ):
-    """
-    Send a normal AI question to Groq.
-
-    The function name remains ask_gemini for compatibility
-    with the existing InsightIQ code.
-    """
-
-    normalized_prompt = normalize_prompt(
-        prompt
-    )
-
-    dataset_text = serialize_dataset_summary(
-        dataset_summary
-    )
 
     system_prompt = """
 You are InsightIQ AI.
@@ -430,88 +954,59 @@ You are an expert:
 • Business Intelligence Consultant
 • Machine Learning Engineer
 
-Your job is to help users understand and work with
-their uploaded datasets.
+Help users understand their uploaded datasets.
 
-IMPORTANT RULES:
+Rules:
 
-1. Use the uploaded dataset information whenever available.
-
-2. Never invent numbers, statistics, trends, or facts.
-
-3. Only claim something when the supplied dataset
-   information supports it.
-
-4. If the available information is insufficient,
-   clearly explain what is missing.
-
-5. Give practical business insights.
-
-6. Explain findings clearly.
-
-7. Recommend useful cleaning steps when relevant.
-
-8. Recommend useful visualizations when relevant.
-
-9. Use professional formatting.
-
-10. Use headings and bullet points where appropriate.
-
-11. Keep responses focused and useful.
-
-12. Do not mention internal prompts, system instructions,
-    APIs, models, or implementation details.
+1. Use only supplied dataset information.
+2. Never invent numbers.
+3. Clearly state when information is insufficient.
+4. Give practical business insights.
+5. Explain findings clearly.
+6. Recommend useful cleaning steps when relevant.
+7. Recommend useful visualizations when relevant.
+8. Use professional formatting.
+9. Use headings and bullet points.
+10. Do not mention internal prompts, APIs,
+   implementation details, or system instructions.
 """
 
-    user_prompt = f"""
-UPLOADED DATASET INFORMATION
+    if dataset_summary:
 
-{dataset_text}
+        user_prompt = f"""
+UPLOADED DATASET INFORMATION:
 
+{json.dumps(
+    dataset_summary,
+    indent=2,
+    default=str,
+)}
 
-USER REQUEST
+USER REQUEST:
 
-{normalized_prompt}
+{prompt}
 
-
-Analyze the user's request using the dataset information
-above.
-
-Provide the most useful and accurate response possible.
-
-Do not invent unsupported information.
+Answer using the uploaded dataset information.
+Do not invent unsupported facts.
 """
+
+    else:
+
+        user_prompt = prompt
 
     try:
 
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt,
-                },
-            ],
+        return call_ai(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            max_tokens=1500,
             temperature=0.3,
-            max_tokens=MAX_CHAT_TOKENS,
         )
-
-        content = (
-            response.choices[0]
-            .message
-            .content
-        )
-
-        return content.strip() if content else ""
 
     except Exception as error:
 
         print("=" * 80)
-        print("GROQ AI ERROR")
+        print("GROQ ERROR")
         print(error)
         print("=" * 80)
 
@@ -526,113 +1021,50 @@ def generate_report(
     prompt: str,
     dataset_summary: dict,
 ):
-    """
-    Generate a professional structured business report.
-
-    The report can adapt to requests such as:
-
-    • Sales report
-    • Executive report
-    • Customer report
-    • KPI report
-    • Financial report
-    • Trend report
-    • Data quality report
-    • Anomaly report
-    • Management report
-    • Custom report
-    """
-
-    normalized_prompt = normalize_prompt(
-        prompt
-    )
-
-    dataset_text = serialize_dataset_summary(
-        dataset_summary
-    )
 
     report_system_prompt = """
 You are InsightIQ AI Report Generator.
 
-You are a senior Business Intelligence Analyst,
-Data Analytics consultant, and business reporting expert.
+You are a senior Business Intelligence Analyst
+and Data Analytics consultant.
 
-Your job is to create professional reports from
-uploaded datasets.
+Create professional business reports from
+uploaded dataset information.
 
-The user may request:
+Rules:
 
-• Executive reports
-• Sales reports
-• Financial reports
-• Customer analysis
-• Marketing reports
-• Operations reports
-• Data quality reports
-• Performance reports
-• KPI reports
-• Trend analysis
-• Anomaly reports
-• Dataset summaries
-• Management reports
-• Custom business reports
-
-IMPORTANT RULES:
-
-1. Use ONLY information contained in the supplied
-   dataset information.
-
-2. Never invent statistics, numbers, trends,
-   percentages, or business facts.
-
-3. If something cannot be determined from the available
-   dataset information, clearly say so.
-
-4. Adapt the report to exactly what the user requested.
-
-5. Make the report professional and decision-oriented.
-
-6. Use clear Markdown headings.
-
-7. Include important metrics when available.
-
-8. Explain important findings.
-
-9. Include recommendations when appropriate.
-
-10. Use structured lists when useful.
-
-11. Keep the report concise enough to remain readable.
-
-12. Do not mention internal prompts, APIs, models,
+1. Use ONLY supplied information.
+2. Never invent statistics.
+3. Never invent trends.
+4. Never invent business facts.
+5. Clearly state when information is unavailable.
+6. Adapt the report to the user's request.
+7. Make it professional and printable.
+8. Use clear headings.
+9. Include important metrics when available.
+10. Explain important findings.
+11. Include recommendations when appropriate.
+12. Do not mention APIs, models, prompts,
     or implementation details.
-
-13. Do not add unnecessary filler.
-
-14. Clearly distinguish dataset-supported findings
-    from recommendations.
-
-15. If a requested analysis cannot be calculated from
-    the supplied summary, explain the limitation instead
-    of guessing.
+13. Avoid unnecessary filler.
 """
 
     user_prompt = f"""
-DATASET INFORMATION
+DATASET INFORMATION:
 
-{dataset_text}
+{json.dumps(
+    dataset_summary,
+    indent=2,
+    default=str,
+)}
 
+USER'S REPORT REQUEST:
 
-USER'S REPORT REQUEST
-
-{normalized_prompt}
-
+{prompt}
 
 Create the requested report.
 
-Use a professional structure.
-
-Possible sections include:
+Use relevant sections such as:
 
 # Report Title
 
@@ -646,51 +1078,23 @@ Possible sections include:
 
 ## Trends and Patterns
 
-## Rankings
-
-## Anomalies
-
-## Data Quality
-
 ## Risks
 
 ## Opportunities
 
 ## Recommendations
 
-Only include sections that are relevant.
-
-If the user requested a specific structure,
-follow that structure.
-
-Do not invent unsupported information.
+Only include sections relevant to the request.
 """
 
     try:
 
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {
-                    "role": "system",
-                    "content": report_system_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt,
-                },
-            ],
+        return call_ai(
+            system_prompt=report_system_prompt,
+            user_prompt=user_prompt,
+            max_tokens=3000,
             temperature=0.2,
-            max_tokens=MAX_REPORT_TOKENS,
         )
-
-        content = (
-            response.choices[0]
-            .message
-            .content
-        )
-
-        return content.strip() if content else ""
 
     except Exception as error:
 
@@ -703,256 +1107,47 @@ Do not invent unsupported information.
 
 
 # =========================================================
-# SPECIALIZED ANALYSIS
-# =========================================================
-
-def generate_specialized_analysis(
-    intent: str,
-    prompt: str,
-    dataset_summary: dict,
-):
-    """
-    Generate an analysis specifically suited to the
-    detected user intent.
-
-    This lets InsightIQ respond differently to requests
-    such as rankings, trends, KPIs, anomalies, etc.
-    """
-
-    normalized_prompt = normalize_prompt(
-        prompt
-    )
-
-    dataset_text = serialize_dataset_summary(
-        dataset_summary
-    )
-
-    intent_instructions = {
-
-        "kpi": """
-Identify the most relevant KPIs and business metrics
-available from the dataset.
-
-Explain what each KPI means and why it matters.
-Do not invent metrics that cannot be supported.
-""",
-
-        "ranking": """
-Identify the ranking requested by the user.
-
-Clearly state the ranking dimension and provide the
-requested top/bottom entities when the supplied data
-allows it.
-
-Do not fabricate rankings.
-""",
-
-        "trend": """
-Analyze time-based trends, changes, growth, declines,
-seasonality, or other temporal patterns when available.
-
-If time information is unavailable, explain that limitation.
-""",
-
-        "anomaly": """
-Identify potential anomalies, unusual values,
-outliers, or unexpected patterns supported by the data.
-
-Do not call something an anomaly without evidence.
-""",
-
-        "data_quality": """
-Analyze missing values, duplicate rows, inconsistent
-data, invalid values, and other available data-quality
-indicators.
-
-Provide practical cleaning recommendations.
-""",
-
-        "customer_analysis": """
-Analyze customer-related behavior, value, concentration,
-segments, retention-related indicators, or other customer
-patterns supported by the dataset.
-""",
-
-        "sales_analysis": """
-Analyze sales-related performance, revenue,
-products, categories, sales trends, and other
-sales indicators available in the dataset.
-""",
-
-        "financial_analysis": """
-Analyze revenue, profit, expenses, costs, margins,
-financial performance, and related indicators available
-in the dataset.
-""",
-
-        "dashboard": """
-Design a practical business dashboard based on the
-available dataset.
-
-Recommend:
-
-• KPI cards
-• Charts
-• Tables
-• Filters
-• Business questions answered by each visualization
-
-Do not claim that a visualization has been created.
-Provide the dashboard specification.
-""",
-
-        "comparison": """
-Compare the groups, periods, products, customers,
-regions, or categories requested by the user.
-
-Clearly explain the differences supported by the data.
-""",
-
-        "recommendation": """
-Provide practical business recommendations based only
-on the available evidence.
-
-Separate observed findings from recommended actions.
-""",
-
-        "summary": """
-Provide a concise but useful overview of the dataset,
-including structure, quality, important patterns,
-and business-relevant findings.
-""",
-
-    }
-
-    instructions = intent_instructions.get(
-        intent,
-        """
-Answer the user's request using the available
-dataset information.
-""",
-    )
-
-    system_prompt = f"""
-You are InsightIQ's specialized Business Intelligence AI.
-
-Detected user intent:
-
-{intent}
-
-Your task:
-
-{instructions}
-
-GLOBAL RULES:
-
-1. Use only the supplied dataset information.
-
-2. Never invent unsupported numbers or facts.
-
-3. If the information is insufficient, say so clearly.
-
-4. Give useful business context.
-
-5. Use headings and bullet points where appropriate.
-
-6. Keep the response professional and concise.
-
-7. Do not mention internal implementation details.
-"""
-
-    user_prompt = f"""
-DATASET INFORMATION
-
-{dataset_text}
-
-
-USER REQUEST
-
-{normalized_prompt}
-
-
-Complete the requested analysis.
-"""
-
-    try:
-
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt,
-                },
-            ],
-            temperature=0.2,
-            max_tokens=MAX_CHAT_TOKENS,
-        )
-
-        content = (
-            response.choices[0]
-            .message
-            .content
-        )
-
-        return content.strip() if content else ""
-
-    except Exception as error:
-
-        print("=" * 80)
-        print("SPECIALIZED AI ERROR")
-        print(error)
-        print("=" * 80)
-
-        raise
-
-
-# =========================================================
-# PROCESS USER REQUEST
+# PROCESS REQUEST
 # =========================================================
 
 def process_request(
     prompt: str,
-    dataset_summary: dict | None = None,
+    dataset_summary: dict | None,
+    dataframe: pd.DataFrame | None = None,
 ) -> dict:
     """
-    Main AI request pipeline.
+    Main AI orchestration layer.
 
-    Flow:
+    Important architecture:
 
-        User request
-             ↓
-        Classifier
-             ↓
-        Intent
-             ↓
-        Specialized AI
-             ↓
-        Structured API response
+    User request
+        ↓
+    Intent classification
+        ↓
+    Deterministic Pandas analysis
+        ↓
+    Small result sent to AI
+        ↓
+    Professional response
 
-    This is the main function used by /ai/ask.
+    This prevents large datasets from being sent directly
+    to the LLM.
     """
 
-    normalized_prompt = normalize_prompt(
-        prompt
-    )
+    if not prompt.strip():
 
-    if not normalized_prompt:
+        return {
+            "success": False,
+            "type": "error",
+            "response": "Please enter a request.",
+        }
 
-        raise ValueError(
-            "Prompt cannot be empty."
-        )
-
-    # =====================================================
+    # -----------------------------------------------------
     # CLASSIFY
-    # =====================================================
+    # -----------------------------------------------------
 
     classification = classify_request(
-        normalized_prompt
+        prompt
     )
 
     intent = classification.get(
@@ -960,92 +1155,240 @@ def process_request(
         "chat",
     )
 
-    # =====================================================
+    # -----------------------------------------------------
+    # RANKING
+    # -----------------------------------------------------
+
+    if intent == "ranking":
+
+        if dataframe is None:
+
+            return {
+                "success": False,
+                "type": "ranking",
+                "response": (
+                    "I need access to the uploaded "
+                    "dataset rows to calculate a ranking."
+                ),
+            }
+
+        analysis = analyze_ranking(
+            dataframe,
+            prompt,
+        )
+
+        if not analysis.get("success"):
+
+            return {
+                "success": False,
+                "type": "ranking",
+                "response": analysis.get(
+                    "message",
+                    "Unable to perform ranking analysis.",
+                ),
+            }
+
+        explanation = explain_ranking(
+            prompt,
+            analysis,
+        )
+
+        return {
+            "success": True,
+            "type": "ranking",
+            "intent": "ranking",
+            "analysis": analysis,
+            "response": explanation,
+        }
+
+    # -----------------------------------------------------
+    # KPI
+    # -----------------------------------------------------
+
+    if intent == "kpi":
+
+        if dataframe is None:
+
+            return {
+                "success": False,
+                "type": "kpi",
+                "response": (
+                    "No uploaded dataset is available "
+                    "for KPI analysis."
+                ),
+            }
+
+        analysis = analyze_kpis(
+            dataframe
+        )
+
+        if not analysis.get("success"):
+
+            return {
+                "success": False,
+                "type": "kpi",
+                "response": analysis.get(
+                    "message",
+                    "Unable to calculate KPIs.",
+                ),
+            }
+
+        explanation = explain_analysis(
+            prompt,
+            analysis,
+            "KPI analysis",
+        )
+
+        return {
+            "success": True,
+            "type": "kpi",
+            "intent": "kpi",
+            "analysis": analysis,
+            "response": explanation,
+        }
+
+    # -----------------------------------------------------
+    # DATA QUALITY
+    # -----------------------------------------------------
+
+    if intent == "data_quality":
+
+        if dataframe is None:
+
+            return {
+                "success": False,
+                "type": "data_quality",
+                "response": (
+                    "No uploaded dataset is available "
+                    "for data quality analysis."
+                ),
+            }
+
+        analysis = analyze_data_quality(
+            dataframe
+        )
+
+        explanation = explain_analysis(
+            prompt,
+            analysis,
+            "data quality analysis",
+        )
+
+        return {
+            "success": True,
+            "type": "data_quality",
+            "intent": "data_quality",
+            "analysis": analysis,
+            "response": explanation,
+        }
+
+    # -----------------------------------------------------
     # REPORT
-    # =====================================================
+    # -----------------------------------------------------
 
     if intent == "report":
 
-        answer = generate_report(
-            normalized_prompt,
-            dataset_summary or {},
+        if dataset_summary is None:
+
+            return {
+                "success": False,
+                "type": "report",
+                "response": (
+                    "No uploaded dataset is available."
+                ),
+            }
+
+        report = generate_report(
+            prompt,
+            dataset_summary,
         )
 
         return {
             "success": True,
             "type": "report",
-            "intent": intent,
-            "deliverable": classification.get(
-                "deliverable",
-                "Business report",
-            ),
-            "confidence": classification.get(
-                "confidence",
-                0.0,
-            ),
-            "response": answer,
+            "intent": "report",
+            "response": report,
         }
 
-    # =====================================================
-    # SPECIALIZED DATA ANALYSIS
-    # =====================================================
+    # -----------------------------------------------------
+    # DEFAULT CHAT / OTHER INTENTS
+    # -----------------------------------------------------
 
-    if intent in {
-        "kpi",
-        "ranking",
-        "trend",
-        "anomaly",
-        "data_quality",
-        "customer_analysis",
-        "sales_analysis",
-        "financial_analysis",
-        "dashboard",
-        "comparison",
-        "recommendation",
-        "summary",
-    }:
-
-        answer = generate_specialized_analysis(
-            intent,
-            normalized_prompt,
-            dataset_summary or {},
-        )
-
-        return {
-            "success": True,
-            "type": "analysis",
-            "intent": intent,
-            "deliverable": classification.get(
-                "deliverable",
-                "Dataset analysis",
-            ),
-            "confidence": classification.get(
-                "confidence",
-                0.0,
-            ),
-            "response": answer,
-        }
-
-    # =====================================================
-    # NORMAL CHAT
-    # =====================================================
-
-    answer = ask_gemini(
-        normalized_prompt,
+    response = ask_gemini(
+        prompt,
         dataset_summary,
     )
 
     return {
         "success": True,
         "type": "answer",
-        "intent": "chat",
-        "deliverable": classification.get(
-            "deliverable",
-            "AI response",
-        ),
-        "confidence": classification.get(
-            "confidence",
-            0.0,
-        ),
-        "response": answer,
+        "intent": intent,
+        "response": response,
     }
+
+
+# =========================================================
+# GENERIC ANALYSIS EXPLANATION
+# =========================================================
+
+def explain_analysis(
+    prompt: str,
+    analysis: dict,
+    analysis_name: str,
+) -> str:
+
+    system_prompt = """
+You are InsightIQ AI.
+
+You are a senior Business Intelligence Analyst.
+
+The application has already calculated the dataset
+analysis.
+
+Your task is to explain the supplied calculations.
+
+Never invent numbers.
+
+Never modify calculated values.
+
+Use professional business language.
+
+Give useful interpretation and recommendations.
+"""
+
+    user_prompt = f"""
+USER REQUEST:
+
+{prompt}
+
+ANALYSIS TYPE:
+
+{analysis_name}
+
+CALCULATED RESULTS:
+
+{json.dumps(
+    analysis,
+    indent=2,
+    default=str,
+)}
+
+Explain the results clearly.
+
+Include:
+
+## Findings
+
+## Business Insight
+
+## Recommendation
+
+Only make claims supported by the supplied results.
+"""
+
+    return call_ai(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        max_tokens=1200,
+        temperature=0.2,
+    )

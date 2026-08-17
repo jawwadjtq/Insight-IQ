@@ -1,9 +1,17 @@
-from io import BytesIO
-from xml.sax.saxutils import escape
-
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+from app.services.ai_service import (
+    process_request,
+    ask_gemini,
+    generate_report,
+)
+
+from app.services import storage
+
+from io import BytesIO
+from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
@@ -21,14 +29,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-
-from app.services.ai_service import (
-    process_request,
-    ask_gemini,
-    generate_report,
-)
-
-from app.services import storage
 
 
 # =========================================================
@@ -107,9 +107,9 @@ def get_compact_summary():
 @router.post("/ask")
 def ask_ai(request: AIRequest):
 
-    # -----------------------------------------------------
-    # DATASET CHECK
-    # -----------------------------------------------------
+    # =====================================================
+    # VALIDATE DATASET
+    # =====================================================
 
     if storage.current_summary is None:
 
@@ -118,9 +118,9 @@ def ask_ai(request: AIRequest):
             detail="No dataset uploaded yet.",
         )
 
-    # -----------------------------------------------------
-    # PROMPT CHECK
-    # -----------------------------------------------------
+    # =====================================================
+    # VALIDATE PROMPT
+    # =====================================================
 
     if not request.prompt.strip():
 
@@ -129,21 +129,22 @@ def ask_ai(request: AIRequest):
             detail="Please enter a question.",
         )
 
-    # -----------------------------------------------------
+    # =====================================================
     # DATASET SUMMARY
-    # -----------------------------------------------------
+    # =====================================================
 
     compact_summary = get_compact_summary()
 
-    # -----------------------------------------------------
-    # PROCESS REQUEST
-    # -----------------------------------------------------
+    # =====================================================
+    # PROCESS AI REQUEST
+    # =====================================================
 
     try:
 
         result = process_request(
             request.prompt,
             compact_summary,
+            storage.current_dataset,
         )
 
         return result
@@ -227,146 +228,11 @@ Do not invent unsupported information.
 
 
 # =========================================================
-# PDF TEXT HELPER
-# =========================================================
-
-def add_report_text_to_story(
-    story,
-    report_text,
-    heading_style,
-    body_style,
-    bullet_style,
-):
-    """
-    Convert AI Markdown-like output into ReportLab
-    paragraphs and headings.
-    """
-
-    lines = report_text.splitlines()
-
-    for line in lines:
-
-        clean_line = line.strip()
-
-        # -------------------------------------------------
-        # EMPTY LINE
-        # -------------------------------------------------
-
-        if not clean_line:
-
-            story.append(
-                Spacer(
-                    1,
-                    5,
-                )
-            )
-
-            continue
-
-        # -------------------------------------------------
-        # HEADING
-        # -------------------------------------------------
-
-        if clean_line.startswith("#"):
-
-            heading = clean_line.lstrip(
-                "#"
-            ).strip()
-
-            heading = escape(
-                heading
-            )
-
-            story.append(
-                Paragraph(
-                    heading,
-                    heading_style,
-                )
-            )
-
-            continue
-
-        # -------------------------------------------------
-        # BULLET
-        # -------------------------------------------------
-
-        if (
-            clean_line.startswith("-")
-            or clean_line.startswith("*")
-            or clean_line.startswith("•")
-        ):
-
-            bullet = clean_line.lstrip(
-                "-*•"
-            ).strip()
-
-            bullet = escape(
-                bullet
-            )
-
-            story.append(
-                Paragraph(
-                    f"• {bullet}",
-                    bullet_style,
-                )
-            )
-
-            continue
-
-        # -------------------------------------------------
-        # NUMBERED ITEM
-        # -------------------------------------------------
-
-        if (
-            len(clean_line) > 2
-            and clean_line[0].isdigit()
-            and clean_line[1] in [
-                ".",
-                ")",
-            ]
-        ):
-
-            numbered = escape(
-                clean_line
-            )
-
-            story.append(
-                Paragraph(
-                    numbered,
-                    body_style,
-                )
-            )
-
-            continue
-
-        # -------------------------------------------------
-        # NORMAL PARAGRAPH
-        # -------------------------------------------------
-
-        paragraph_text = escape(
-            clean_line
-        )
-
-        story.append(
-            Paragraph(
-                paragraph_text,
-                body_style,
-            )
-        )
-
-
-# =========================================================
 # GENERATE PDF REPORT
 # =========================================================
 
 @router.post("/report/pdf")
-def generate_pdf_report(
-    request: AIRequest,
-):
-
-    # -----------------------------------------------------
-    # DATASET CHECK
-    # -----------------------------------------------------
+def generate_pdf_report(request: AIRequest):
 
     if storage.current_summary is None:
 
@@ -375,18 +241,11 @@ def generate_pdf_report(
             detail="No dataset uploaded yet.",
         )
 
-    # -----------------------------------------------------
-    # PROMPT CHECK
-    # -----------------------------------------------------
-
     if not request.prompt.strip():
 
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Please describe the report "
-                "you want."
-            ),
+            detail="Please describe the report you want.",
         )
 
     compact_summary = get_compact_summary()
@@ -394,7 +253,7 @@ def generate_pdf_report(
     try:
 
         # =================================================
-        # GENERATE REPORT
+        # GENERATE AI REPORT
         # =================================================
 
         report_text = generate_report(
@@ -406,24 +265,8 @@ def generate_pdf_report(
 
             raise HTTPException(
                 status_code=500,
-                detail=(
-                    "AI returned an empty report."
-                ),
+                detail="AI returned an empty report.",
             )
-
-        # =================================================
-        # SAVE REPORT IN STORAGE
-        # =================================================
-
-        storage.store_report(
-            {
-                "title": "InsightIQ AI Report",
-                "filename": storage.current_filename,
-                "type": "ai_report",
-                "prompt": request.prompt,
-                "content": report_text,
-            }
-        )
 
         # =================================================
         # PDF BUFFER
@@ -442,8 +285,6 @@ def generate_pdf_report(
             leftMargin=18 * mm,
             topMargin=18 * mm,
             bottomMargin=18 * mm,
-            title="InsightIQ AI Report",
-            author="InsightIQ",
         )
 
         # =================================================
@@ -508,7 +349,6 @@ def generate_pdf_report(
             "InsightIQSmall",
             parent=styles["BodyText"],
             fontSize=8.5,
-            leading=11,
             textColor=colors.grey,
         )
 
@@ -519,7 +359,7 @@ def generate_pdf_report(
         story = []
 
         # =================================================
-        # HEADER
+        # TITLE
         # =================================================
 
         story.append(
@@ -536,10 +376,6 @@ def generate_pdf_report(
             )
         )
 
-        # =================================================
-        # DATASET NAME
-        # =================================================
-
         dataset_name = escape(
             str(
                 compact_summary.get(
@@ -552,35 +388,6 @@ def generate_pdf_report(
         story.append(
             Paragraph(
                 f"<b>Dataset:</b> {dataset_name}",
-                body_style,
-            )
-        )
-
-        story.append(
-            Spacer(
-                1,
-                8,
-            )
-        )
-
-        # =================================================
-        # USER REQUEST
-        # =================================================
-
-        user_request = escape(
-            request.prompt.strip()
-        )
-
-        story.append(
-            Paragraph(
-                "<b>Requested Analysis:</b>",
-                body_style,
-            )
-        )
-
-        story.append(
-            Paragraph(
-                user_request,
                 body_style,
             )
         )
@@ -657,7 +464,6 @@ def generate_pdf_report(
                 55 * mm,
                 100 * mm,
             ],
-            repeatRows=0,
         )
 
         overview_table.setStyle(
@@ -734,7 +540,7 @@ def generate_pdf_report(
         )
 
         # =================================================
-        # AI ANALYSIS
+        # AI REPORT
         # =================================================
 
         story.append(
@@ -744,13 +550,97 @@ def generate_pdf_report(
             )
         )
 
-        add_report_text_to_story(
-            story,
-            report_text,
-            heading_style,
-            body_style,
-            bullet_style,
-        )
+        # =================================================
+        # PARSE AI RESPONSE
+        # =================================================
+
+        lines = report_text.splitlines()
+
+        for line in lines:
+
+            clean_line = line.strip()
+
+            if not clean_line:
+
+                story.append(
+                    Spacer(
+                        1,
+                        5,
+                    )
+                )
+
+                continue
+
+            # -------------------------------------------------
+            # HEADINGS
+            # -------------------------------------------------
+
+            if clean_line.startswith("#"):
+
+                heading = clean_line.lstrip(
+                    "#"
+                ).strip()
+
+                story.append(
+                    Paragraph(
+                        escape(heading),
+                        heading_style,
+                    )
+                )
+
+            # -------------------------------------------------
+            # BULLETS
+            # -------------------------------------------------
+
+            elif (
+                clean_line.startswith("-")
+                or clean_line.startswith("*")
+                or clean_line.startswith("•")
+            ):
+
+                bullet = clean_line.lstrip(
+                    "-*•"
+                ).strip()
+
+                story.append(
+                    Paragraph(
+                        f"• {escape(bullet)}",
+                        bullet_style,
+                    )
+                )
+
+            # -------------------------------------------------
+            # NUMBERED POINTS
+            # -------------------------------------------------
+
+            elif (
+                len(clean_line) > 2
+                and clean_line[0].isdigit()
+                and clean_line[1] in [
+                    ".",
+                    ")",
+                ]
+            ):
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style,
+                    )
+                )
+
+            # -------------------------------------------------
+            # NORMAL TEXT
+            # -------------------------------------------------
+
+            else:
+
+                story.append(
+                    Paragraph(
+                        escape(clean_line),
+                        body_style,
+                    )
+                )
 
         # =================================================
         # FOOTER
@@ -811,7 +701,5 @@ def generate_pdf_report(
 
         raise HTTPException(
             status_code=500,
-            detail=(
-                "Failed to generate PDF report."
-            ),
+            detail="Failed to generate PDF report.",
         )
