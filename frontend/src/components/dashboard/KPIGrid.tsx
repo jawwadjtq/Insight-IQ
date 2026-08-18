@@ -1,64 +1,57 @@
-import {
-  Database,
-  Table,
-  Brain,
-  TriangleAlert,
-} from "lucide-react";
+import KPICard from "./KPICard";
 
-import StatsCard from "./StatsCard";
+import { kpis } from "../../data/dashboard";
 
-type Props = {
-  summary: any;
-};
+interface KPIGridProps {
+  summary?: any;
+}
 
-export default function KPIGrid({ summary }: Props) {
+export default function KPIGrid({ summary }: KPIGridProps) {
   return (
-    <section className="space-y-6">
+    <section>
+      {/* Section Header */}
 
-      <div>
-
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Key Performance Indicators
+          Business Overview
         </h2>
 
-        <p className="mt-2 text-slate-500 dark:text-slate-400">
-          Overview of your uploaded dataset.
+        <p className="mt-1 text-slate-500 dark:text-slate-400">
+          Key performance indicators across your workspace.
         </p>
-
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      {/* KPI Cards */}
 
-        <StatsCard
-          title="Rows"
-          value={summary.rows}
-          icon={Database}
-          color="text-blue-500"
-        />
+      <div
+        className="
+          grid
+          gap-6
+          sm:grid-cols-2
+          xl:grid-cols-4
+        "
+      >
+        {kpis.map((kpi) => {
+          const key = (kpi as any).key;
 
-        <StatsCard
-          title="Columns"
-          value={summary.columns}
-          icon={Table}
-          color="text-green-500"
-        />
+          const value =
+            summary?.[key] !== undefined &&
+            summary?.[key] !== null
+              ? summary[key]
+              : kpi.value;
 
-        <StatsCard
-          title="Quality Score"
-          value={`${summary.quality_score}%`}
-          icon={Brain}
-          color="text-purple-500"
-        />
-
-        <StatsCard
-          title="Missing Values"
-          value={summary.missing_values}
-          icon={TriangleAlert}
-          color="text-orange-500"
-        />
-
+          return (
+            <KPICard
+              key={kpi.title}
+              title={kpi.title}
+              value={value}
+              subtitle={kpi.subtitle}
+              trend={kpi.trend}
+              icon={kpi.icon}
+            />
+          );
+        })}
       </div>
-
     </section>
   );
 }

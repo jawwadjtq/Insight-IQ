@@ -1,113 +1,320 @@
-import { Sun, Moon, Monitor } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Monitor,
+} from "lucide-react";
+
 import { useTheme } from "../../context/ThemeContext";
 
+import {
+  useAppSettings,
+} from "../../context/AppSettingsContext";
+
+import {
+  useLanguage,
+} from "../../context/LanguageContext";
+
+/* =========================================================
+   APPEARANCE SETTINGS
+========================================================= */
+
 export default function AppearanceSettings() {
-  const { theme, setTheme } = useTheme();
+  /* =======================================================
+     THEME
+  ======================================================= */
+
+  const {
+    theme,
+    setTheme,
+  } = useTheme();
+
+  /* =======================================================
+     APP SETTINGS
+  ======================================================= */
+
+  const {
+    settings,
+    updateSetting,
+  } = useAppSettings();
+
+  /* =======================================================
+     LANGUAGE
+  ======================================================= */
+
+  const { t } = useLanguage();
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+    <div
+      className="
+        rounded-2xl
+        bg-white
+        p-8
+        text-slate-900
 
-      <h2 className="text-2xl font-bold mb-6">
-        Appearance
+        dark:bg-slate-900
+        dark:text-white
+      "
+    >
+      {/* =====================================================
+          TITLE
+      ===================================================== */}
+
+      <h2 className="mb-6 text-2xl font-bold">
+        {t("appearance")}
       </h2>
 
       <div className="space-y-8">
-
-        {/* Theme */}
+        {/* ===================================================
+            THEME
+        =================================================== */}
 
         <div>
-
-          <h3 className="text-lg font-semibold mb-4">
-            Theme
+          <h3 className="mb-4 text-lg font-semibold">
+            {t("theme")}
           </h3>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* =================================================
+                LIGHT
+            ================================================= */}
 
             <button
+              type="button"
               onClick={() => setTheme("light")}
-              className={`rounded-xl border p-5 transition-all ${
-                theme === "light"
-                  ? "border-blue-500 bg-blue-600 text-white"
-                  : "border-slate-700 bg-slate-800 hover:border-slate-500"
-              }`}
+              className={`
+                rounded-xl
+                border
+                p-5
+                text-center
+                transition-all
+
+                ${
+                  theme === "light"
+                    ? `
+                      border-blue-500
+                      bg-blue-600
+                      text-white
+                      shadow-lg
+                      shadow-blue-500/20
+                    `
+                    : `
+                      border-slate-200
+                      bg-slate-50
+                      hover:border-blue-400
+
+                      dark:border-slate-700
+                      dark:bg-slate-800
+                    `
+                }
+              `}
             >
-              <Sun className="mx-auto mb-3" size={30} />
+              <Sun
+                className="mx-auto mb-3"
+                size={30}
+              />
 
               <h4 className="font-semibold">
-                Light
+                {t("light")}
               </h4>
 
-              <p className="text-sm mt-2 text-slate-300">
-                Bright interface for daytime work.
-              </p>
+              <p
+                className={`
+                  mt-2
+                  text-sm
 
+                  ${
+                    theme === "light"
+                      ? "text-blue-100"
+                      : "text-slate-500 dark:text-slate-400"
+                  }
+                `}
+              >
+                {t("lightDescription")}
+              </p>
             </button>
 
+            {/* =================================================
+                DARK
+            ================================================= */}
+
             <button
+              type="button"
               onClick={() => setTheme("dark")}
-              className={`rounded-xl border p-5 transition-all ${
-                theme === "dark"
-                  ? "border-blue-500 bg-blue-600 text-white"
-                  : "border-slate-700 bg-slate-800 hover:border-slate-500"
-              }`}
+              className={`
+                rounded-xl
+                border
+                p-5
+                text-center
+                transition-all
+
+                ${
+                  theme === "dark"
+                    ? `
+                      border-blue-500
+                      bg-blue-600
+                      text-white
+                      shadow-lg
+                      shadow-blue-500/20
+                    `
+                    : `
+                      border-slate-200
+                      bg-slate-50
+                      hover:border-blue-400
+
+                      dark:border-slate-700
+                      dark:bg-slate-800
+                    `
+                }
+              `}
             >
-              <Moon className="mx-auto mb-3" size={30} />
+              <Moon
+                className="mx-auto mb-3"
+                size={30}
+              />
 
               <h4 className="font-semibold">
-                Dark
+                {t("dark")}
               </h4>
 
-              <p className="text-sm mt-2 text-slate-300">
-                Comfortable for night-time work.
-              </p>
+              <p
+                className={`
+                  mt-2
+                  text-sm
 
+                  ${
+                    theme === "dark"
+                      ? "text-blue-100"
+                      : "text-slate-500 dark:text-slate-400"
+                  }
+                `}
+              >
+                {t("darkDescription")}
+              </p>
             </button>
+
+            {/* =================================================
+                SYSTEM
+            ================================================= */}
 
             <button
+              type="button"
               onClick={() => setTheme("system")}
-              className={`rounded-xl border p-5 transition-all ${
-                theme === "system"
-                  ? "border-blue-500 bg-blue-600 text-white"
-                  : "border-slate-700 bg-slate-800 hover:border-slate-500"
-              }`}
+              className={`
+                rounded-xl
+                border
+                p-5
+                text-center
+                transition-all
+
+                ${
+                  theme === "system"
+                    ? `
+                      border-blue-500
+                      bg-blue-600
+                      text-white
+                      shadow-lg
+                      shadow-blue-500/20
+                    `
+                    : `
+                      border-slate-200
+                      bg-slate-50
+                      hover:border-blue-400
+
+                      dark:border-slate-700
+                      dark:bg-slate-800
+                    `
+                }
+              `}
             >
-              <Monitor className="mx-auto mb-3" size={30} />
+              <Monitor
+                className="mx-auto mb-3"
+                size={30}
+              />
 
               <h4 className="font-semibold">
-                System
+                {t("system")}
               </h4>
 
-              <p className="text-sm mt-2 text-slate-300">
-                Match your operating system theme.
+              <p
+                className={`
+                  mt-2
+                  text-sm
+
+                  ${
+                    theme === "system"
+                      ? "text-blue-100"
+                      : "text-slate-500 dark:text-slate-400"
+                  }
+                `}
+              >
+                {t("systemDescription")}
               </p>
-
             </button>
-
           </div>
-
         </div>
 
-        {/* Font Size */}
+        {/* ===================================================
+            FONT SIZE
+        =================================================== */}
 
         <div>
-
-          <label className="block font-semibold mb-3">
-            Font Size
+          <label
+            htmlFor="font-size"
+            className="mb-3 block font-semibold"
+          >
+            {t("fontSize")}
           </label>
 
           <select
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3"
-            defaultValue="medium"
+            id="font-size"
+            value={settings.fontSize}
+            onChange={(event) =>
+              updateSetting(
+                "fontSize",
+                event.target.value as
+                  | "small"
+                  | "medium"
+                  | "large"
+              )
+            }
+            className="
+              w-full
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              p-3
+              text-slate-900
+              outline-none
+              transition
+
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-500/20
+
+              dark:border-slate-700
+              dark:bg-slate-800
+              dark:text-white
+            "
           >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
+            <option value="small">
+              {t("small")}
+            </option>
+
+            <option value="medium">
+              {t("medium")}
+            </option>
+
+            <option value="large">
+              {t("large")}
+            </option>
           </select>
-
         </div>
-
       </div>
-
     </div>
   );
 }

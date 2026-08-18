@@ -6,64 +6,84 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
 } from "recharts";
 
 import ChartCard from "./ChartCard";
 
-interface Props {
-  rows: number;
+import { useAppSettings } from "../../context/AppSettingsContext";
+
+interface DataPoint {
+  name: string;
+  value: number;
 }
 
-export default function LineChartCard({ rows }: Props) {
-  const data = Array.from({ length: 12 }, (_, i) => ({
-    month: [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ][i],
-    value: Math.round(rows * (0.6 + Math.random() * 0.4)),
-  }));
+interface Props {
+  data?: DataPoint[];
+  title?: string;
+  subtitle?: string;
+}
+
+export default function LineChartCard({
+  data = [],
+  title = "Trend Analysis",
+  subtitle = "Data trend over time",
+}: Props) {
+  const { chartSettings } = useAppSettings();
+
+  const chartData =
+    data.length > 0
+      ? data
+      : [
+          { name: "Jan", value: 0 },
+          { name: "Feb", value: 0 },
+          { name: "Mar", value: 0 },
+          { name: "Apr", value: 0 },
+        ];
 
   return (
     <ChartCard
-      title="Monthly Trend"
-      subtitle="Illustrative trend based on dataset size"
+      title={title}
+      subtitle={subtitle}
     >
       <div className="h-80">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+        >
+          <LineChart data={chartData}>
+            {chartSettings.showGrid && (
+              <CartesianGrid
+                strokeDasharray="3 3"
+                className="opacity-50"
+              />
+            )}
 
-        <ResponsiveContainer width="100%" height="100%">
-
-          <LineChart data={data}>
-
-            <CartesianGrid strokeDasharray="3 3" />
-
-            <XAxis dataKey="month" />
+            <XAxis dataKey="name" />
 
             <YAxis />
 
-            <Tooltip />
+            {chartSettings.showTooltip && (
+              <Tooltip />
+            )}
+
+            {chartSettings.showLegend && (
+              <Legend />
+            )}
 
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#2563EB"
+              stroke="#3B82F6"
               strokeWidth={3}
               dot={{ r: 4 }}
+              activeDot={{ r: 7 }}
+              isAnimationActive={
+                chartSettings.animations
+              }
             />
-
           </LineChart>
-
         </ResponsiveContainer>
-
       </div>
     </ChartCard>
   );

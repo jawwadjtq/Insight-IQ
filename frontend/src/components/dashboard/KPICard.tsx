@@ -1,125 +1,147 @@
-import {
-  Database,
-  Columns,
-  AlertTriangle,
-  CheckCircle2,
-} from "lucide-react";
-
-interface Props {
-  summary: any;
+import { TrendingUp, TrendingDown } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+interface KPICardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  trend?: string | number;
+  icon: LucideIcon;
 }
 
-export default function KPIGrid({ summary }: Props) {
-  if (!summary) return null;
+export default function KPICard({
+  title,
+  value,
+  subtitle,
+  trend,
+  icon: Icon,
+}: KPICardProps) {
+  const numericTrend = trend
+    ? parseFloat(String(trend).replace("%", ""))
+    : null;
 
-  const cards = [
-    {
-      title: "Total Rows",
-      value: summary.rows,
-      subtitle: "Records in dataset",
-      icon: Database,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
-    },
-    {
-      title: "Total Columns",
-      value: summary.columns,
-      subtitle: "Available features",
-      icon: Columns,
-      color: "text-violet-400",
-      bg: "bg-violet-500/10",
-    },
-    {
-      title: "Missing Values",
-      value: summary.missing_values,
-      subtitle: "Require attention",
-      icon: AlertTriangle,
-      color: "text-yellow-400",
-      bg: "bg-yellow-500/10",
-    },
-    {
-      title: "Quality Score",
-      value: `${summary.quality_score}%`,
-      subtitle: "Overall dataset health",
-      icon: CheckCircle2,
-      color: "text-green-400",
-      bg: "bg-green-500/10",
-    },
-  ];
+  const isPositive = numericTrend !== null && numericTrend >= 0;
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map((card) => {
-        const Icon = card.icon;
+    <div
+      className="
+        group
+        relative
+        overflow-hidden
+        rounded-2xl
+        border
+        border-slate-200
+        bg-white
+        p-6
+        shadow-sm
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:shadow-xl
+        dark:border-slate-800
+        dark:bg-slate-900
+      "
+    >
+      {/* Decorative glow */}
 
-        return (
-          <div
-            key={card.title}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          -right-10
+          -top-10
+          h-24
+          w-24
+          rounded-full
+          bg-blue-500/10
+          blur-2xl
+          transition-all
+          duration-300
+          group-hover:bg-blue-500/20
+        "
+      />
+
+      {/* Header */}
+
+      <div className="relative flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {title}
+          </p>
+
+          <h3
             className="
-              group
-              relative
-              overflow-hidden
-              rounded-3xl
-              border
-              border-slate-800
-              bg-slate-900
-              p-6
-              transition-all
-              duration-300
-              hover:-translate-y-1
-              hover:border-blue-500
-              hover:shadow-2xl
+              mt-3
+              text-3xl
+              font-bold
+              tracking-tight
+              text-slate-900
+              dark:text-white
             "
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-400">
-                  {card.title}
-                </p>
+            {value}
+          </h3>
+        </div>
 
-                <h2 className="mt-3 text-4xl font-bold text-white">
-                  {card.value}
-                </h2>
+        <div
+          className="
+            flex
+            h-11
+            w-11
+            items-center
+            justify-center
+            rounded-xl
+            bg-blue-50
+            text-blue-600
+            transition-transform
+            duration-300
+            group-hover:scale-110
+            dark:bg-blue-500/10
+            dark:text-blue-400
+          "
+        >
+          <Icon size={21} />
+        </div>
+      </div>
 
-                <p className="mt-2 text-sm text-slate-500">
-                  {card.subtitle}
-                </p>
-              </div>
+      {/* Footer */}
 
-              <div
-                className={`
-                  ${card.bg}
-                  flex
-                  h-14
-                  w-14
-                  items-center
-                  justify-center
-                  rounded-2xl
-                `}
-              >
-                <Icon
-                  className={card.color}
-                  size={28}
-                />
-              </div>
-            </div>
+      <div className="relative mt-5 flex items-center justify-between gap-3">
+        {subtitle && (
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+            {subtitle}
+          </p>
+        )}
 
-            {/* Bottom Progress Bar */}
+        {trend && (
+          <span
+            className={`
+              inline-flex
+              shrink-0
+              items-center
+              gap-1
+              rounded-full
+              px-2.5
+              py-1
+              text-xs
+              font-semibold
 
-            <div className="mt-8 h-2 overflow-hidden rounded-full bg-slate-800">
-              <div
-                className="h-full rounded-full bg-blue-500 transition-all duration-700"
-                style={{
-                  width:
-                    card.title === "Quality Score"
-                      ? `${summary.quality_score}%`
-                      : "100%",
-                }}
-              />
-            </div>
-          </div>
-        );
-      })}
+              ${
+                isPositive
+                  ? "bg-green-500/10 text-green-500"
+                  : "bg-red-500/10 text-red-500"
+              }
+            `}
+          >
+            {isPositive ? (
+              <TrendingUp size={13} />
+            ) : (
+              <TrendingDown size={13} />
+            )}
+
+            {trend}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers.upload import router as upload_router
 from app.routers.ai import router as ai_router
 from app.routers.dashboard import router as dashboard_router
+from app.routers.dataset import router as dataset_router
 
 
 # =========================================================
@@ -23,6 +24,7 @@ api = FastAPI(
 api.include_router(upload_router)
 api.include_router(ai_router)
 api.include_router(dashboard_router)
+api.include_router(dataset_router)
 
 
 # =========================================================

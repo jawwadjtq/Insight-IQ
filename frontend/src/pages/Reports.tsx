@@ -36,114 +36,201 @@ export default function Reports() {
     loadSummary();
   }, []);
 
+  /* ========================================================= */
+  /* LOADING */
+  /* ========================================================= */
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh] px-4">
+      <div className="flex min-h-[70vh] items-center justify-center px-4">
         <div className="text-center">
-          <div className="h-12 w-12 mx-auto rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-blue-600 animate-spin mb-6" />
-          <h2 className="text-xl md:text-2xl font-semibold text-slate-600 dark:text-slate-300">
+          <div className="mx-auto mb-6 h-12 w-12 animate-spin rounded-full border-4 border-slate-300 border-t-blue-600 dark:border-slate-700" />
+
+          <h2 className="text-xl font-semibold text-slate-600 dark:text-slate-300 md:text-2xl">
             Loading Report...
           </h2>
+
+          <p className="mt-2 text-sm text-slate-400">
+            Preparing your business intelligence report.
+          </p>
         </div>
       </div>
     );
   }
 
+  /* ========================================================= */
+  /* NO DATASET */
+  /* ========================================================= */
+
   if (!summary) {
     return (
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
+      <div className="mx-auto max-w-7xl p-4 md:p-8">
         <div className="space-y-8">
+          {/* Header */}
+
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white md:text-4xl">
               Reports
             </h1>
 
-            <p className="mt-2 text-slate-500 dark:text-slate-400">
+            <p className="mt-2 max-w-2xl text-slate-500 dark:text-slate-400">
               AI-generated business intelligence reports and executive insights.
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 md:p-12 shadow-sm">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
-              No Dataset Uploaded
-            </h2>
+          {/* Empty State */}
 
-            <p className="mt-4 text-slate-500 dark:text-slate-400 text-base md:text-lg">
-              Please upload a dataset first.
-            </p>
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-12">
+            <div className="mx-auto max-w-2xl text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                <FileSpreadsheet size={30} />
+              </div>
+
+              <h2 className="mt-6 text-2xl font-bold text-slate-900 dark:text-white md:text-3xl">
+                No Dataset Uploaded
+              </h2>
+
+              <p className="mt-4 text-base text-slate-500 dark:text-slate-400 md:text-lg">
+                Please upload a dataset first to generate your AI-powered
+                business report.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 md:space-y-10">
-      {/* Header */}
+  /* ========================================================= */
+  /* REPORT */
+  /* ========================================================= */
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm p-6 md:p-8">
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-8">
+  return (
+    <div className="mx-auto max-w-7xl space-y-8 p-4 md:space-y-10 md:p-8">
+      {/* ========================================================= */}
+      {/* HEADER */}
+      {/* ========================================================= */}
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-8">
+        <div className="flex flex-col gap-8 xl:flex-row xl:items-center xl:justify-between">
+          {/* Title */}
+
           <div className="min-w-0">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight">
+            <h1 className="text-3xl font-bold leading-tight text-slate-900 dark:text-white md:text-4xl">
               AI Executive Report
             </h1>
-<div className="mt-5 flex flex-wrap gap-3">
 
-  <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-4 py-2 text-sm text-blue-300">
-    AI Generated
-  </span>
+            {/* Status Badges */}
 
-  <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 text-sm text-emerald-300">
-    Confidence 96%
-  </span>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-300">
+                AI Generated
+              </span>
 
-  <span className="rounded-full bg-slate-800 px-4 py-2 text-sm text-slate-300">
-    Generated: {new Date().toLocaleDateString()}
-  </span>
+              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-300">
+                Confidence 96%
+              </span>
 
-</div>
-            <p className="mt-3 text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-2xl">
-              Automatically generated business intelligence report with executive
-              insights, data quality analysis, and actionable recommendations.
+              <span className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                Generated: {new Date().toLocaleDateString()}
+              </span>
+            </div>
+
+            <p className="mt-3 max-w-2xl text-sm text-slate-500 dark:text-slate-400 md:text-base">
+              Automatically generated business intelligence report with
+              executive insights, data quality analysis, and actionable
+              recommendations.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full xl:w-auto">
+          {/* Export Buttons */}
+
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap xl:w-auto">
             <button
               onClick={() => window.print()}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white px-5 py-3 font-medium transition-all duration-200 shadow-sm"
+              className="
+                inline-flex
+                w-full
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-slate-800
+                px-5
+                py-3
+                font-medium
+                text-white
+                shadow-sm
+                transition-all
+                duration-200
+                hover:bg-slate-700
+                sm:w-auto
+              "
             >
               <Printer size={18} />
-             🖨 Print Report
-          
+              Print Report
             </button>
 
             <button
               onClick={() => exportExcel(summary)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 font-medium transition-all duration-200 shadow-sm"
+              className="
+                inline-flex
+                w-full
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-emerald-600
+                px-5
+                py-3
+                font-medium
+                text-white
+                shadow-sm
+                transition-all
+                duration-200
+                hover:bg-emerald-700
+                sm:w-auto
+              "
             >
               <FileSpreadsheet size={18} />
-              📊 Export Excel
-              
+              Export Excel
             </button>
 
             <button
               onClick={() => exportPDF(summary)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 font-medium transition-all duration-200 shadow-sm"
+              className="
+                inline-flex
+                w-full
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-blue-600
+                px-5
+                py-3
+                font-medium
+                text-white
+                shadow-sm
+                transition-all
+                duration-200
+                hover:bg-blue-700
+                sm:w-auto
+              "
             >
               <Download size={18} />
-              📄 Export PDF
-              
+              Export PDF
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Dataset Overview */}
+      {/* ========================================================= */}
+      {/* DATASET OVERVIEW */}
+      {/* ========================================================= */}
 
       <section className="space-y-5">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white md:text-2xl">
             Dataset Overview
           </h2>
 
@@ -152,85 +239,102 @@ export default function Reports() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 md:gap-6">
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {/* Dataset */}
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Dataset
             </p>
 
-            <h2 className="mt-4 text-xl md:text-2xl font-bold text-slate-900 dark:text-white break-words">
+            <h2 className="mt-4 break-words text-xl font-bold text-slate-900 dark:text-white md:text-2xl">
               {summary.dataset_name}
             </h2>
+
             <p className="mt-2 text-sm text-slate-400">
-Uploaded dataset
-</p>
+              Uploaded dataset
+            </p>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
+          {/* Rows */}
 
-  <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
-    Rows
-  </p>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Rows
+            </p>
 
-  <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-    {summary.rows}
-  </h2>
+            <h2 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white md:text-4xl">
+              {summary.rows}
+            </h2>
 
-  <p className="mt-2 text-sm text-slate-400">
-    Total records available
-  </p>
+            <p className="mt-2 text-sm text-slate-400">
+              Total records available
+            </p>
+          </div>
 
-</div>
+          {/* Columns */}
 
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Columns
             </p>
 
-            <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
+            <h2 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white md:text-4xl">
               {summary.columns}
             </h2>
+
             <p className="mt-2 text-sm text-slate-400">
-Available attributes
-</p>
+              Available attributes
+            </p>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow p-6">
+          {/* Quality */}
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Quality Score
             </p>
 
-            <h2 className="mt-4 text-3xl md:text-4xl font-bold text-green-500">
+            <h2 className="mt-4 text-3xl font-bold text-green-500 md:text-4xl">
               {summary.quality_score}%
             </h2>
+
             <p className="mt-2 text-sm text-slate-400">
-AI quality assessment
-</p>
+              AI quality assessment
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Executive Summary */}
+      {/* ========================================================= */}
+      {/* EXECUTIVE SUMMARY */}
+      {/* ========================================================= */}
 
       <section className="space-y-4">
         <ExecutiveSummary summary={summary} />
       </section>
 
-      {/* Data Quality */}
+      {/* ========================================================= */}
+      {/* DATA QUALITY */}
+      {/* ========================================================= */}
 
       <section className="space-y-4">
         <DataQuality summary={summary} />
       </section>
 
-      {/* Recommendations */}
+      {/* ========================================================= */}
+      {/* RECOMMENDATIONS */}
+      {/* ========================================================= */}
 
       <section className="space-y-4">
         <Recommendations summary={summary} />
       </section>
 
-      {/* Report Status */}
+      {/* ========================================================= */}
+      {/* REPORT STATUS */}
+      {/* ========================================================= */}
 
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm p-6 md:p-8">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           Report Generation Status
         </h2>
@@ -239,57 +343,66 @@ AI quality assessment
           All report sections have been successfully generated.
         </p>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 px-5 py-4">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Executive Summary */}
+
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
             <p className="font-medium text-green-700 dark:text-green-400">
               ✅ Executive Summary generated successfully
-
-✅ Data quality assessment completed
-
-✅ AI recommendations generated
-
-✅ PDF export ready
-
-✅ Excel export ready
             </p>
           </div>
 
-          <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 px-5 py-4">
+          {/* Data Quality */}
+
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
             <p className="font-medium text-green-700 dark:text-green-400">
-              ✅ Dataset Quality Analysed
+              ✅ Data quality assessment completed
             </p>
           </div>
 
-          <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 px-5 py-4">
+          {/* AI Recommendations */}
+
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
             <p className="font-medium text-green-700 dark:text-green-400">
-              ✅ Business Recommendations Generated
+              ✅ AI recommendations generated
             </p>
           </div>
 
-          <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 px-5 py-4">
+          {/* PDF */}
+
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
             <p className="font-medium text-green-700 dark:text-green-400">
-              ✅ Ready for PDF Export
+              ✅ PDF export ready
             </p>
           </div>
 
-          <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 px-5 py-4">
+          {/* Excel */}
+
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
             <p className="font-medium text-green-700 dark:text-green-400">
-              ✅ Ready for Excel Export
+              ✅ Excel export ready
+            </p>
+          </div>
+
+          {/* Dataset */}
+
+          <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
+            <p className="font-medium text-green-700 dark:text-green-400">
+              ✅ Dataset quality analyzed
             </p>
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-      {/* Footer */}
 
-      <div className="pt-6 text-center">
+      {/* ========================================================= */}
+      {/* FOOTER */}
+      {/* ========================================================= */}
 
+      <div className="pb-6 pt-2 text-center">
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Generated automatically by InsightIQ AI Analytics Platform
         </p>
-
       </div>
-
-  
+    </div>
+  );
+}

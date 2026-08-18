@@ -1,304 +1,638 @@
 import {
-  LayoutDashboard,
-  Upload,
   BarChart3,
   BrainCircuit,
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  FileBarChart,
   FileText,
+  LayoutDashboard,
   Settings,
+  Upload,
+  X,
 } from "lucide-react";
+
+import type { ComponentType } from "react";
 
 import { NavLink } from "react-router-dom";
 
-const menuItems = [
-  {
-    name: "Dashboard",
-    path: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Upload Dataset",
-    path: "/upload",
-    icon: Upload,
-  },
-  {
-    name: "Analytics",
-    path: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    name: "AI Analyst",
-    path: "/ai",
-    icon: BrainCircuit,
-  },
-  {
-    name: "Reports",
-    path: "/reports",
-    icon: FileText,
-  },
-  {
-    name: "Settings",
-    path: "/settings",
-    icon: Settings,
-  },
-];
+import { useState } from "react";
+
+import { useLanguage } from "../../context/LanguageContext";
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+interface IconProps {
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+}
+
+interface MenuItem {
+  labelKey: string;
+  path: string;
+  icon: ComponentType<IconProps>;
+}
 
 interface SidebarProps {
+  collapsed?: boolean;
+  onToggle?: () => void;
+  isOpen?: boolean;
   onClose?: () => void;
 }
 
-export default function Sidebar({ onClose }: SidebarProps) {
+/* =========================================================
+   MENU
+========================================================= */
+
+const menuItems: MenuItem[] = [
+  {
+    labelKey: "dashboard",
+    path: "/",
+    icon: LayoutDashboard,
+  },
+
+  {
+    labelKey: "upload",
+    path: "/upload",
+    icon: Upload,
+  },
+
+  {
+    labelKey: "analytics",
+    path: "/analytics",
+    icon: BarChart3,
+  },
+
+  {
+    labelKey: "aiAnalyst",
+    path: "/ai-analyst",
+    icon: BrainCircuit,
+  },
+
+  {
+    labelKey: "reports",
+    path: "/reports",
+    icon: FileBarChart,
+  },
+];
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+export default function Sidebar({
+  collapsed: controlledCollapsed,
+  onToggle,
+  isOpen = true,
+  onClose,
+}: SidebarProps) {
+  /* =======================================================
+     LANGUAGE
+  ======================================================= */
+
+  const { t } = useLanguage();
+
+  /* =======================================================
+     LOCAL COLLAPSE STATE
+  ======================================================= */
+
+  const [localCollapsed, setLocalCollapsed] =
+    useState(false);
+
+  const isControlled =
+    controlledCollapsed !== undefined;
+
+  const collapsed = isControlled
+    ? controlledCollapsed
+    : localCollapsed;
+
+  /* =======================================================
+     TOGGLE SIDEBAR
+  ======================================================= */
+
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setLocalCollapsed(
+        (current) => !current
+      );
+    }
+  };
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
-    <aside
-      className="
-      w-72
-      h-screen
-      flex
-      flex-col
-      overflow-y-auto
+    <>
+      {/* =====================================================
+          MOBILE OVERLAY
+      ===================================================== */}
 
-      bg-white
-      dark:bg-slate-900
+      {isOpen && (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          onClick={onClose}
+          className="
+            fixed
+            inset-0
+            z-40
+            bg-black/50
+            backdrop-blur-sm
+            lg:hidden
+          "
+        />
+      )}
 
-      border-r
-      border-slate-200
-      dark:border-slate-800
-      "
-    >
-      {/* Logo */}
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
 
-      <div
-        className="
-        p-6
+      <aside
+        className={`
+          fixed
+          left-0
+          top-0
+          z-50
+          flex
+          h-screen
+          flex-col
 
-        border-b
-        border-slate-200
-        dark:border-slate-800
-        "
+          border-r
+          border-slate-200
+
+          bg-white
+          text-slate-900
+
+          shadow-xl
+
+          transition-all
+          duration-300
+          ease-in-out
+
+          dark:border-slate-800
+          dark:bg-slate-950
+          dark:text-white
+
+          lg:relative
+          lg:translate-x-0
+          lg:shadow-none
+
+          ${
+            collapsed
+              ? "lg:w-20"
+              : "lg:w-72"
+          }
+
+          ${
+            isOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+        `}
       >
-        <div className="flex items-center gap-4">
-          <div
-            className="
-            h-14
-            w-14
+        {/* ===================================================
+            HEADER
+        =================================================== */}
 
-            rounded-2xl
-
-            bg-gradient-to-br
-            from-blue-600
-            to-indigo-600
-
+        <div
+          className={`
             flex
+            h-20
+            shrink-0
             items-center
-            justify-center
+            border-b
+            border-slate-200
+            dark:border-slate-800
 
-            text-2xl
+            transition-all
+            duration-300
 
-            shadow-lg
+            ${
+              collapsed
+                ? "justify-center px-3"
+                : "justify-between px-5"
+            }
+          `}
+        >
+          <NavLink
+            to="/"
+            onClick={onClose}
+            className="flex items-center gap-3"
+          >
+            {/* LOGO */}
+
+            <div
+              className="
+                flex
+                h-11
+                w-11
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                bg-gradient-to-br
+                from-blue-600
+                to-indigo-600
+                text-white
+                shadow-lg
+              "
+            >
+              <Database
+                size={23}
+                strokeWidth={2.2}
+              />
+            </div>
+
+            {/* BRAND */}
+
+            {!collapsed && (
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold">
+                  InsightIQ
+                </h1>
+
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  AI Analytics Platform
+                </p>
+              </div>
+            )}
+          </NavLink>
+
+          {/* MOBILE CLOSE */}
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close sidebar"
+            className="
+              rounded-lg
+              p-2
+              text-slate-500
+              hover:bg-slate-100
+              hover:text-slate-900
+
+              dark:hover:bg-slate-800
+              dark:hover:text-white
+
+              lg:hidden
             "
           >
-            🧠
-          </div>
-
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-              InsightIQ
-            </h1>
-
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              AI Business Intelligence Platform
-            </p>
-
-            <p className="mt-1 text-xs text-slate-400">
-              Version 1.0
-            </p>
-          </div>
+            <X size={20} />
+          </button>
         </div>
-      </div>
 
-      {/* Navigation Title */}
+        {/* ===================================================
+            NAVIGATION
+        =================================================== */}
 
-      <div className="px-6 pt-6 pb-2">
-        <p
+        <nav
           className="
-          text-xs
-
-          uppercase
-
-          tracking-[0.2em]
-
-          text-slate-400
+            flex-1
+            overflow-y-auto
+            overflow-x-hidden
+            px-3
+            py-6
           "
         >
-          Navigation
-        </p>
-      </div>
+          {/* WORKSPACE */}
 
-      {/* Navigation */}
+          {!collapsed && (
+            <p
+              className="
+                mb-3
+                px-3
+                text-[11px]
+                font-semibold
+                uppercase
+                tracking-wider
+                text-slate-400
+                dark:text-slate-500
+              "
+            >
+              {t("workspace")}
+            </p>
+          )}
 
-      <nav className="flex-1 px-4 pb-4 space-y-2">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
+          {/* MENU */}
 
-          return (
+          <div className="space-y-1">
+            {menuItems.map(
+              (item) => {
+                const Icon =
+                  item.icon;
+
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={
+                      item.path === "/"
+                    }
+                    onClick={onClose}
+                    title={
+                      collapsed
+                        ? t(
+                            item.labelKey
+                          )
+                        : undefined
+                    }
+                    className={({
+                      isActive,
+                    }) =>
+                      `
+                      group
+                      flex
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-3
+                      py-3
+                      text-sm
+                      font-medium
+                      transition-all
+                      duration-200
+
+                      ${
+                        collapsed
+                          ? "justify-center"
+                          : ""
+                      }
+
+                      ${
+                        isActive
+                          ? `
+                            bg-blue-600
+                            text-white
+                            shadow-md
+                            shadow-blue-600/20
+                          `
+                          : `
+                            text-slate-600
+                            hover:bg-slate-100
+                            hover:text-slate-900
+
+                            dark:text-slate-400
+                            dark:hover:bg-slate-900
+                            dark:hover:text-white
+                          `
+                      }
+                      `
+                    }
+                  >
+                    {({
+                      isActive,
+                    }) => (
+                      <>
+                        <Icon
+                          size={20}
+                          strokeWidth={
+                            isActive
+                              ? 2.5
+                              : 2
+                          }
+                          className="shrink-0"
+                        />
+
+                        {!collapsed && (
+                          <span className="truncate">
+                            {t(
+                              item.labelKey
+                            )}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                );
+              }
+            )}
+          </div>
+
+          {/* =================================================
+              SETTINGS
+          ================================================= */}
+
+          <div className="mt-8">
+            {!collapsed && (
+              <p
+                className="
+                  mb-3
+                  px-3
+                  text-[11px]
+                  font-semibold
+                  uppercase
+                  tracking-wider
+                  text-slate-400
+                  dark:text-slate-500
+                "
+              >
+                {t("settings")}
+              </p>
+            )}
+
             <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => onClose?.()}
-              className={({ isActive }) =>
+              to="/settings"
+              onClick={onClose}
+              title={
+                collapsed
+                  ? t("settings")
+                  : undefined
+              }
+              className={({
+                isActive,
+              }) =>
                 `
+                group
                 flex
                 items-center
                 gap-3
-
-                px-4
-                py-3
-
                 rounded-xl
-
+                px-3
+                py-3
+                text-sm
                 font-medium
-
                 transition-all
-                duration-300
+                duration-200
+
+                ${
+                  collapsed
+                    ? "justify-center"
+                    : ""
+                }
 
                 ${
                   isActive
                     ? `
-                      bg-gradient-to-r
-                      from-blue-600
-                      to-indigo-600
-
+                      bg-blue-600
                       text-white
-
-                      shadow-lg
-                      shadow-blue-600/30
+                      shadow-md
+                      shadow-blue-600/20
                     `
                     : `
-                      text-slate-700
-                      dark:text-slate-300
+                      text-slate-600
+                      hover:bg-slate-100
+                      hover:text-slate-900
 
-                      hover:bg-blue-50
-                      dark:hover:bg-slate-800
-
-                      hover:text-blue-600
+                      dark:text-slate-400
+                      dark:hover:bg-slate-900
                       dark:hover:text-white
-
-                      hover:translate-x-1
                     `
                 }
                 `
               }
             >
-              <Icon size={20} />
+              {({
+                isActive,
+              }) => (
+                <>
+                  <Settings
+                    size={20}
+                    strokeWidth={
+                      isActive
+                        ? 2.5
+                        : 2
+                    }
+                    className="shrink-0"
+                  />
 
-              <span>{item.name}</span>
+                  {!collapsed && (
+                    <span>
+                      {t(
+                        "settings"
+                      )}
+                    </span>
+                  )}
+                </>
+              )}
             </NavLink>
-          );
-        })}
-      </nav>
+          </div>
+        </nav>
 
-      {/* Footer */}
+        {/* ===================================================
+            FOOTER
+        =================================================== */}
 
-      <div
-        className="
-        p-5
-
-        border-t
-        border-slate-200
-        dark:border-slate-800
-        "
-      >
         <div
           className="
-          rounded-2xl
+            shrink-0
+            border-t
+            border-slate-200
+            p-3
 
-          border
-          border-slate-700
-
-          bg-gradient-to-br
-          from-slate-900
-          to-slate-800
-
-          p-5
+            dark:border-slate-800
           "
         >
-          <p className="text-sm text-slate-400">
-            Current Plan
-          </p>
+          {/* INSIGHTIQ INFO */}
 
-          <h3
-            className="
-            mt-2
+          {!collapsed && (
+            <div
+              className="
+                mb-3
+                rounded-xl
+                border
+                border-slate-200
+                bg-slate-50
+                p-4
 
-            text-2xl
+                dark:border-slate-800
+                dark:bg-slate-900
+              "
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-blue-100
+                    text-blue-600
 
-            font-bold
+                    dark:bg-blue-500/10
+                    dark:text-blue-400
+                  "
+                >
+                  <FileText
+                    size={18}
+                  />
+                </div>
 
-            text-white
-            "
-          >
-            Free
-          </h3>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">
+                    InsightIQ
+                  </p>
 
-          <p
-            className="
-            mt-2
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    AI-powered business
+                    intelligence
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
-            text-sm
-
-            leading-6
-
-            text-slate-400
-            "
-          >
-            Upgrade to unlock AI Reports,
-            Advanced Analytics,
-            Cloud Storage,
-            and Premium Insights.
-          </p>
+          {/* =================================================
+              COLLAPSE BUTTON
+          ================================================= */}
 
           <button
+            type="button"
+            onClick={handleToggle}
+            title={
+              collapsed
+                ? "Expand sidebar"
+                : "Collapse sidebar"
+            }
             className="
-            mt-5
+              flex
+              w-full
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              py-2.5
+              text-slate-500
+              transition
 
-            w-full
+              hover:bg-slate-100
+              hover:text-slate-900
 
-            rounded-xl
-
-            bg-gradient-to-r
-            from-blue-600
-            to-indigo-600
-
-            py-3
-
-            font-semibold
-
-            text-white
-
-            transition
-
-            hover:scale-[1.02]
+              dark:border-slate-800
+              dark:bg-slate-950
+              dark:text-slate-400
+              dark:hover:bg-slate-900
+              dark:hover:text-white
             "
           >
-            Upgrade to Pro
+            {collapsed ? (
+              <ChevronRight
+                size={18}
+              />
+            ) : (
+              <>
+                <ChevronLeft
+                  size={18}
+                />
+
+                <span className="ml-2 text-xs font-medium">
+                  Collapse Sidebar
+                </span>
+              </>
+            )}
           </button>
         </div>
-
-        <p
-          className="
-          mt-5
-
-          text-center
-
-          text-xs
-
-          text-slate-500
-          "
-        >
-          © 2026 InsightIQ
-          <br />
-          All Rights Reserved
-        </p>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
